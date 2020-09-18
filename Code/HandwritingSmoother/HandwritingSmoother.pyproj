@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>cb06134b-b283-4d32-91d1-2eed8daffee0</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>HandwritingSmoother.py</StartupFile>
+    <StartupFile>pywritesmooth\HandwritingSmoother.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,54 +21,62 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="HandwritingSmoother.py" />
-    <Compile Include="Smooth\Smoother.py">
+    <Compile Include="pywritesmooth\HandwritingSmoother.py" />
+    <Compile Include="pywritesmooth\Smooth\Smoother.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Smooth\__init__.py">
+    <Compile Include="pywritesmooth\Smooth\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\AutoEncoderTrainer.py">
+    <Compile Include="pywritesmooth\TrainSmoother\AutoEncoderTrainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\GANTrainer.py">
+    <Compile Include="pywritesmooth\TrainSmoother\GANTrainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\RNNTrainer.py">
+    <Compile Include="pywritesmooth\TrainSmoother\RNNTrainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\StyleTransferTrainer.py">
+    <Compile Include="pywritesmooth\TrainSmoother\StyleTransferTrainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\SVDTrainer.py">
+    <Compile Include="pywritesmooth\TrainSmoother\SVDTrainer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\TrainerInterface.py">
+    <Compile Include="pywritesmooth\TrainSmoother\TrainerInterface.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="TrainSmoother\__init__.py">
+    <Compile Include="pywritesmooth\TrainSmoother\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Utility\HandwritingLoader.py">
+    <Compile Include="pywritesmooth\Utility\HandwritingLoader.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Utility\Letter.py">
+    <Compile Include="pywritesmooth\Utility\Letter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Utility\Log.py">
+    <Compile Include="pywritesmooth\Utility\Log.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Utility\__init__.py">
+    <Compile Include="pywritesmooth\Utility\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="__init__.py">
+    <Compile Include="pywritesmooth\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Smooth\" />
-    <Folder Include="TrainSmoother\" />
-    <Folder Include="Utility\" />
+    <Folder Include="pywritesmooth\" />
+    <Folder Include="pywritesmooth\Smooth\" />
+    <Folder Include="pywritesmooth\TrainSmoother\" />
+    <Folder Include="pywritesmooth\Utility\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="LICENSE" />
+    <Content Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

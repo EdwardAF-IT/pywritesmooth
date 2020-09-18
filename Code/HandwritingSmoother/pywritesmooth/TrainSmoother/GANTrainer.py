@@ -4,7 +4,7 @@ class GANTrainer(TrainerInterface):
     def __init__(self):
         raise NotImplementedError
 
-    def train():
+    def train(self):
         raise NotImplementedError
 
     def test():

@@ -28,5 +28,5 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    pip install $(baseFolder)
+    pip install $(baseFolder)/.
   displayName: 'pywritesmooth'

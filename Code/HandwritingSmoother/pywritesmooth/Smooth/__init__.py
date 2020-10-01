@@ -1,1 +1,2 @@
-from Smoother import Smoother
+__author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
+__credits__ = 'Dr John Santerre'

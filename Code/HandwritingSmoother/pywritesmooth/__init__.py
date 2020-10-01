@@ -1,11 +1,3 @@
-from HandwritingSmoother import HandwritingSmoother
-from Smooth import Smoother
-from TrainSmoother import AutoEncoderTrainer
-from TrainSmoother import GANTrainer
-from TrainSmoother import RNNTrainer
-from TrainSmoother import StyleTransferTrainer
-from TrainSmoother import SVDTrainer
-from TrainSmoother import TrainerInterface
-from Utility import HandwritingLoader
-from Utility import Letter
-from Utility import Log
+__version__ = "0.0.1"
+__author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
+__credits__ = 'Dr John Santerre'

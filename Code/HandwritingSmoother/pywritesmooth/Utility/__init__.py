@@ -1,3 +1,2 @@
-from HandwritingLoader import HandwritingLoader
-from Letter import Letter
-from Log import Log
+__author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
+__credits__ = 'Dr John Santerre'

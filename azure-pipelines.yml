@@ -10,8 +10,6 @@ pool:
   vmImage: 'ubuntu-latest'
 strategy:
   matrix:
-    Python27:
-      python.version: '2.7'
     Python38:
       python.version: '3.8'
 
@@ -24,6 +22,7 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
+    dir $(Build.SourcesDirectory)
     python -m pip install --upgrade pip
     pip install -r $(baseFolder)/requirements.txt
   displayName: 'Install dependencies'

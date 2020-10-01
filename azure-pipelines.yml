@@ -14,7 +14,7 @@ strategy:
       python.version: '3.8'
 
 variables:
-  baseFolder: Code/HandwritingSmoother
+  baseFolder: $(Build.SourcesDirectory)/Code/HandwritingSmoother
 steps:
 - task: UsePythonVersion@0
   inputs:
@@ -22,7 +22,7 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
-    dir $(Build.SourcesDirectory)
+    dir $(baseFolder)
     python -m pip install --upgrade pip
     pip install -r $(baseFolder)/requirements.txt
   displayName: 'Install dependencies'

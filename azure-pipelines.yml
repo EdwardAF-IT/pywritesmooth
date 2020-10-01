@@ -19,6 +19,8 @@ strategy:
     Python37:
       python.version: '3.7'
 
+variables:
+  baseFolder: Code\HandwritingSmoother
 steps:
 - task: UsePythonVersion@0
   inputs:
@@ -27,10 +29,9 @@ steps:
 
 - script: |
     python -m pip install --upgrade pip
-    pip install -r requirements.txt
+    pip install -r $(baseFolder)/requirements.txt
   displayName: 'Install dependencies'
 
 - script: |
-    pip install pytest pytest-azurepipelines
-    pytest
-  displayName: 'pytest'
+    pip install $(baseFolder)/pywritesmooth
+  displayName: 'pywritesmooth'

@@ -28,5 +28,19 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    pip install $(baseFolder)
-  displayName: 'pywritesmooth'
+    python $(baseFolder)/setup.py sdist
+  displayName: 'Artifact creation'
+
+- task: TwineAuthenticate@1
+  inputs:
+    artifactFeed: 'smucapstone'
+
+- task: CopyFiles@1
+  inputs:
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'pywritesmooth'
+    publishLocation: 'Container'

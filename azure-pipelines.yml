@@ -22,7 +22,7 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
-    dir $(baseFolder)
+    dir $(Build.ArtifactStagingDirectory)
     python -m pip install --upgrade pip
     pip install -r $(baseFolder)/requirements.txt
   displayName: 'Install dependencies'

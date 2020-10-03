@@ -43,4 +43,3 @@ steps:
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'pywritesmooth'
-    publishLocation: 'Container'

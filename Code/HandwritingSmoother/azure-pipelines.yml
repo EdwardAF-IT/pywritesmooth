@@ -15,6 +15,7 @@ strategy:
 
 variables:
   baseFolder: $(Build.SourcesDirectory)/Code/HandwritingSmoother
+
 steps:
 - task: UsePythonVersion@0
   inputs:
@@ -28,5 +29,5 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    pip install $(baseFolder)/.
+    pip install $(baseFolder)
   displayName: 'pywritesmooth'

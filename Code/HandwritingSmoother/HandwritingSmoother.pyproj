@@ -76,7 +76,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".pypirc" />
-    <Content Include="azure-pipelines.yml" />
     <Content Include="LICENSE" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />

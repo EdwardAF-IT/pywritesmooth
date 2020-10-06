@@ -13,9 +13,13 @@ trigger:
      - Code/HandwritingSmoother/*
    exclude:
      - Code/HandwritingSmoother/.vs
-       Code/HandwritingSmoother/*.sln
-       Code/HandwritingSmoother/*.pyproj
-       Code/HandwritingSmoother/pywritesmooth/__pycache__
+     - Code/HandwritingSmoother/*.sln
+     - Code/HandwritingSmoother/*.pyproj
+     - Code/HandwritingSmoother/pywritesmooth/__pycache__
+     - "*.url"
+     - "*.pdf"
+     - "*.doc"
+     - "*.mp4"
     
 
 pool:

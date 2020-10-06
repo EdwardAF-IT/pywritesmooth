@@ -10,17 +10,6 @@ trigger:
  paths:
    include:
      - Code/HandwritingSmoother/*
-   exclude:
-     - "*"
-     - Code/HandwritingSmoother/.vs
-     - Code/HandwritingSmoother/*.sln
-     - Code/HandwritingSmoother/*.pyproj
-     - Code/HandwritingSmoother/pywritesmooth/__pycache__
-     - "*.url"
-     - "*.pdf"
-     - "*.doc"
-     - "*.mp4"
-    
 
 pool:
   vmImage: 'ubuntu-latest'

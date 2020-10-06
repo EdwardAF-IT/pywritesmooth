@@ -1,3 +1,3 @@
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
 __credits__ = 'Dr John Santerre'

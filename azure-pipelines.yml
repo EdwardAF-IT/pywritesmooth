@@ -4,7 +4,19 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
-- master
+ branches:
+   include:
+   - master
+   
+ paths:
+   include:
+     - Code/HandwritingSmoother/*
+   exclude:
+     - Code/HandwritingSmoother/.vs
+       Code/HandwritingSmoother/*.sln
+       Code/HandwritingSmoother/*.pyproj
+       Code/HandwritingSmoother/pywritesmooth/__pycache__
+    
 
 pool:
   vmImage: 'ubuntu-latest'

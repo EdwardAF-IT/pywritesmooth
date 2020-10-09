@@ -35,7 +35,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    python $(baseFolder)/setup.py sdist
+    python $(baseFolder)/setup.py bdist_wheel
   displayName: 'Artifact creation'
 
 - task: TwineAuthenticate@1

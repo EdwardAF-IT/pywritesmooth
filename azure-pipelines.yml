@@ -36,9 +36,7 @@ steps:
 
 - script: |
     cd $(baseFolder)
-    dir
     python setup.py sdist bdist_wheel
-    dir
   displayName: 'Artifact creation'
 
 - task: TwineAuthenticate@1
@@ -47,7 +45,7 @@ steps:
 
 - task: CopyFiles@1
   inputs:
-     contents: Code/HandwritingSmoother/dist/**
+     SourceFolder: $(Agent.BuildDirectory)/Code/HandwritingSmoother/dist
      targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishBuildArtifacts@1

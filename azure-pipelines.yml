@@ -12,6 +12,9 @@ trigger:
        - Code/HandwritingSmoother/*
    exclude:
      - '*'
+     - Code/HandwritingSmoother/*.pyproj
+     - Code/HandwritingSmoother/*.sln
+     - Code/HandwritingSmoother/.vs/*
 
 pool:
   vmImage: 'ubuntu-latest'

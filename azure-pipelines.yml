@@ -35,6 +35,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
+    dir
     python $(baseFolder)/setup.py sdist bdist_wheel
   displayName: 'Artifact creation'
 

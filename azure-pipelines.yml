@@ -9,8 +9,10 @@ trigger:
    - master
  paths:
    include:
-     - Code/HandwritingSmoother/*
-
+       - Code/HandwritingSmoother/**
+   exclude:
+       - Code/HandwritingSmoother/!(*.pdb|*.config|*.pyproj|*.sln|*.mp4|*.doc|*.pdf|*.csv)
+       - Code/HandwritingSmoother/pywritesmooth/!(.vs|__pycache__)/**
 pool:
   vmImage: 'ubuntu-latest'
 strategy:
@@ -27,13 +29,16 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
-    echo $(Build.ArtifactStagingDirectory)
-    python -m pip install --upgrade pip
+    python -m pip install --upgrade pip setuptools wheel
+  displayName: 'Install setup tools'
+
+- script: |
     pip install -r $(baseFolder)/requirements.txt
   displayName: 'Install dependencies'
 
 - script: |
-    python $(baseFolder)/setup.py sdist
+    cd $(baseFolder)
+    python setup.py sdist bdist_wheel
   displayName: 'Artifact creation'
 
 - task: TwineAuthenticate@1
@@ -42,7 +47,8 @@ steps:
 
 - task: CopyFiles@1
   inputs:
-    targetFolder: $(Build.ArtifactStagingDirectory)
+     SourceFolder: Code/HandwritingSmoother/dist
+     targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishBuildArtifacts@1
   inputs:

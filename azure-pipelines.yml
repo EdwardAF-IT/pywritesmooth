@@ -44,8 +44,8 @@ steps:
 
 - task: CopyFiles@1
   inputs:
-     contents: library-basic/dist/**   
-     targetFolder: $(Build.ArtifactStagingDirectory) 
+     contents: $(baseFolder)/dist/**
+     targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishBuildArtifacts@1
   inputs:

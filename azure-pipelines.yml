@@ -45,6 +45,7 @@ steps:
 - task: CopyFiles@1
   inputs:
     Contents: |
+      Code/HandwritingSmoother/dist/**
       Code/HandwritingSmoother/!(*.pdb|*.config|*.pyproj|*.sln|*.mp4|*.doc|*.pdf|*.csv)
       Code/HandwritingSmoother/.pypirc
       Code/HandwritingSmoother/pywritesmooth/*

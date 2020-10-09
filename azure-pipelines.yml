@@ -45,7 +45,7 @@ steps:
 
 - task: CopyFiles@1
   inputs:
-     SourceFolder: $(Agent.BuildDirectory)/Code/HandwritingSmoother/dist
+     SourceFolder: Code/HandwritingSmoother/dist
      targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishBuildArtifacts@1

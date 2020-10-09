@@ -43,7 +43,7 @@ steps:
 - task: CopyFiles@1
   inputs:
     Contents: |
-      Code/HandwritingSmoother/**/!*.pyproj
+      Code/HandwritingSmoother/**/!(*.pyproj)
       Code/HandwritingSmoother/**/*
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 

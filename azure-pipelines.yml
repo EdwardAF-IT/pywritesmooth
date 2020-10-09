@@ -43,7 +43,7 @@ steps:
 - task: CopyFiles@1
   inputs:
     Contents: |
-      Code/HandwritingSmoother/**/!(*.pdb|*.config|*.pyproj|*.sln|*.mp4|*.doc|*.pdf|*.csv)
+      Code/HandwritingSmoother/*/!(*.pdb|*.config|*.pyproj|*.sln|*.mp4|*.doc|*.pdf|*.csv)
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1

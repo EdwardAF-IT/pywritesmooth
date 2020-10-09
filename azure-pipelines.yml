@@ -10,6 +10,8 @@ trigger:
  paths:
    include:
        - Code/HandwritingSmoother/*
+   exclude:
+     - '*'
 
 pool:
   vmImage: 'ubuntu-latest'

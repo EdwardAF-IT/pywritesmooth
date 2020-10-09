@@ -45,6 +45,7 @@ steps:
     Contents: |
       Code/HandwritingSmoother/!(*.pdb|*.config|*.pyproj|*.sln|*.mp4|*.doc|*.pdf|*.csv)
       Code/HandwritingSmoother/.pypirc
+      Code/HandwritingSmoother/pywritesmooth/!(.vs|__pycache__)/**
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1

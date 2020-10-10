@@ -20,11 +20,14 @@ pool:
   vmImage: 'ubuntu-latest'
 strategy:
   matrix:
+    Python37:
+      python.version: '3.7'
     Python38:
       python.version: '3.8'
 
 variables:
   baseFolder: $(Build.SourcesDirectory)/Code/HandwritingSmoother
+  finalModuleName: 'pywritesmooth'
 steps:
 - task: UsePythonVersion@0
   inputs:
@@ -56,4 +59,16 @@ steps:
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'pywritesmooth'
+    ArtifactName: $(finalModuleName)
+
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: 'current'
+    downloadType: 'single'
+    artifactName: $(finalModuleName)
+    itemPattern: '**'
+    downloadPath: '$(System.ArtifactsDirectory)' 
+- script: |
+    python -m pip install --upgrade pip
+    find $(System.ArtifactsDirectory)/*.whl | xargs pip install
+  displayName: 'Test module installation'

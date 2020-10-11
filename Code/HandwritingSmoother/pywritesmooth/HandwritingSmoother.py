@@ -1,6 +1,5 @@
 import sys
 
-from . import *
 from .Smooth import *
 from .TrainSmoother import *
 from .Utility import *

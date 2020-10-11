@@ -1,5 +1,5 @@
 import setuptools
-import pywritesmooth
+import pywritesmooth as pws
 
 import codecs
 import os.path
@@ -38,7 +38,7 @@ setuptools.setup(
     python_requires='>=3.7',
     entry_points={
     'console_scripts': [
-        'pywritesmooth = Handwritingsmoother:main',
+        'pywritesmooth = pws.Handwritingsmoother:main',
     ],
 },
 )

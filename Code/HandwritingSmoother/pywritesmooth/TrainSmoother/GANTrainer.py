@@ -1,4 +1,4 @@
-from . import TrainerInterface
+from .TrainerInterface import TrainerInterface
 
 class GANTrainer(TrainerInterface):
     """description of class"""

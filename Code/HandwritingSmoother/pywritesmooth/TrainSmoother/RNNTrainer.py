@@ -1,3 +1,5 @@
+from .TrainerInterface import TrainerInterface
+
 class RNNTrainer(TrainerInterface):
     """description of class"""
 

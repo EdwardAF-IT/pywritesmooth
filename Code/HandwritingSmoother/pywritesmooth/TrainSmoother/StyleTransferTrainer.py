@@ -1,3 +1,5 @@
+from .TrainerInterface import TrainerInterface
+
 class StyleTransferTrainer(TrainerInterface):
     """description of class"""
 

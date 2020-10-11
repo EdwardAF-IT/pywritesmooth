@@ -1,3 +1,5 @@
+from .TrainerInterface import TrainerInterface
+
 class SVDTrainer(TrainerInterface):
     """description of class"""
 

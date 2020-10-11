@@ -1,3 +1,5 @@
+from .TrainerInterface import TrainerInterface
+
 class AutoEncoderTrainer(TrainerInterface):
     """description of class"""
 

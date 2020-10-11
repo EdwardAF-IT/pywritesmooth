@@ -1,3 +1,5 @@
+from . import TrainerInterface
+
 class GANTrainer(TrainerInterface):
     """description of class"""
 

@@ -37,9 +37,8 @@ setuptools.setup(
     ],
     python_requires='>=3.7',
     entry_points={
-        "console_scripts": [
-            "HandwritingSmoother = HandwritingSmoother.HandwritingSmoother:main"
-            "pywritesmooth = HandwritingSmoother.HandwritingSmoother:main"
-        ]
-    },
+    'console_scripts': [
+        'pywritesmooth = pywritesmooth.Handwritingsmoother:main',
+    ],
+},
 )

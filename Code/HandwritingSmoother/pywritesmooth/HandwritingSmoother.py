@@ -1,8 +1,8 @@
 import sys
 
-from .Smooth import *
-from .TrainSmoother import *
-from .Utility import *
+from pywritesmooth.Smooth import *
+from pywritesmooth.TrainSmoother import *
+from pywritesmooth.Utility import *
 
 def main(args=None):
     """The main routine."""
@@ -15,6 +15,7 @@ def main(args=None):
 
     # Do argument parsing here (eg. with argparse) and anything else
     # you want your project to do. Return values are exit codes.
+    return 0
 
 
 if __name__ == "__main__":

@@ -54,7 +54,7 @@
     <Compile Include="pywritesmooth\TrainSmoother\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pywritesmooth\Utility\HandwritingLoader.py">
+    <Compile Include="pywritesmooth\Utility\HandwritingData.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\Utility\Letter.py">

@@ -1,4 +1,5 @@
 #artifacts-keyring>=0.2.10
+click>=7.0.0
 #matplotlib>=3.3.2
 #numpy>=1.19.2
 #rfc3982>=1.4.0

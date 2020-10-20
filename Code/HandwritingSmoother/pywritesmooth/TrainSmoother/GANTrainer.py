@@ -1,5 +1,4 @@
 from .TrainerInterface import TrainerInterface
-#from pywritesmooth.TrainSmoother.TrainerInterface import *
 
 class GANTrainer(TrainerInterface):
     """description of class"""

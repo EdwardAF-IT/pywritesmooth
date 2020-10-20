@@ -4,11 +4,6 @@ import click
 from pywritesmooth.TrainSmoother import *
 from pywritesmooth.Utility import *
 import pywritesmooth.Smooth.Smoother as sm
-#import pywritesmooth.TrainSmoother.GANTrainer as gan
-#import pywritesmooth.TrainSmoother.StyleTransferTrainer as st
-#import pywritesmooth.Utility.HandwritingData as hw
-#import pywritesmooth.Utility.Log as log
-
 
 @click.command()
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')

@@ -4,7 +4,7 @@ class TrainerInterface(metaclass=ABCMeta):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In TI con")
 
     @classmethod
     def __subclasshook__(cls, subclass):

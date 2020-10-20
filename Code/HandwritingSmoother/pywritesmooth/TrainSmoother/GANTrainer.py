@@ -5,7 +5,7 @@ class GANTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In Gan con")
 
     def train(self):
         raise NotImplementedError

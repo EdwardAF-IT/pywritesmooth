@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import click
 
 from pywritesmooth.TrainSmoother import *
@@ -24,9 +24,13 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
     try:
         switcher = {
             'gan': GANTrainer.GANTrainer(),
-            #'st': StyleTransferTrainer()
+            'st': StyleTransferTrainer.StyleTransferTrainer()
             }
-        return 0
+
+        if train is None and smooth is None:
+            print("Usage: ", os.path.basename(__file__), " --smooth <handwriting sample> --smooth-model <gan | st>  --OR--")
+            print("Usage: ", os.path.basename(__file__), " --train <handwriting sample> --train-models <gan | st>")
+
         if not train is None:
             if train_models is None:
                 print("Please specify --train-models <model> switch when using --train")
@@ -42,8 +46,12 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 TestModels(models)
 
         if not smooth is None:
-            hw = Handwriting(smooth_model)
-            SmoothWriting(hw, switcher.get(smooth_model))
+            if smooth_model is None:
+                print("Please specify --smooth_model <gan | st> switch when using --smooth")
+                return EXIT_FAILURE
+            else:
+                hw = Handwriting(smooth_model)
+                SmoothWriting(hw, switcher.get(smooth_model))
     except NotImplementedError as nie:
         print("Ran into some code that needs implementation: ", nie)
         return EXIT_FAILURE

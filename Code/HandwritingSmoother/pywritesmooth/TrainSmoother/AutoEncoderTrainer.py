@@ -4,7 +4,7 @@ class AutoEncoderTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In AE con")
 
     def train():
         raise NotImplementedError

@@ -4,7 +4,7 @@ class StyleTransferTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In ST con")
 
     def train():
         raise NotImplementedError

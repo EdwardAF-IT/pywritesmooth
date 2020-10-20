@@ -23,8 +23,13 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
             }
 
         if train is None and smooth is None:
-            print("Usage: ", os.path.basename(__file__), " --smooth <handwriting sample> --smooth-model <gan | st>  --OR--")
-            print("Usage: ", os.path.basename(__file__), " --train <handwriting sample> --train-models <gan | st>")
+            try:
+                calledName = __loader__.fullname  # When called as a module
+            except:
+                calledName = os.path.basename(__file__)  # When called as a script
+
+            print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | st>  --OR--")
+            print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | st>")
 
         if not train is None:
             if train_models is None:

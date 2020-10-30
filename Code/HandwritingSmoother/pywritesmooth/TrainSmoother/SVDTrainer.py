@@ -4,7 +4,7 @@ class SVDTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In SVD con")
 
     def train():
         raise NotImplementedError

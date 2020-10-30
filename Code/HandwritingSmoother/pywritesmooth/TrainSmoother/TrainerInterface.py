@@ -1,10 +1,10 @@
-import abc
+from abc import ABCMeta, abstractmethod
 
-class TrainerInterface(metaclass=abc.ABCMeta):
+class TrainerInterface(metaclass=ABCMeta):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In TI con")
 
     @classmethod
     def __subclasshook__(cls, subclass):
@@ -13,22 +13,22 @@ class TrainerInterface(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'extract_text') and 
                 callable(subclass.extract_text))
 
-    @abc.abstractmethod
+    @abstractmethod
     def train():
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def test():
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def getError():
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def save():
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def load():
         raise NotImplementedError

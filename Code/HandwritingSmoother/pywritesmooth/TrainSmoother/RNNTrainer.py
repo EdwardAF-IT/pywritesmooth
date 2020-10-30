@@ -4,7 +4,7 @@ class RNNTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):
-        raise NotImplementedError
+        print("In RNN con")
 
     def train():
         raise NotImplementedError

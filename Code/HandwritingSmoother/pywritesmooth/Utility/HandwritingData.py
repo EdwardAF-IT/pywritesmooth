@@ -5,7 +5,7 @@ class Handwriting(object):
 
        This class manages input data, which for this application will take the form of an image of printed uppercase, lowercase, and numeric characters.  The image format should be a common format such as jpg, png, or gif.
 
-       Additionally, the classes handles tasks like splitting images into individual characters and normalizing their sizes.
+       Additionally, the class handles tasks like splitting images into individual characters and normalizing their sizes.
     """
 
     def __init__(self, inputFileName):

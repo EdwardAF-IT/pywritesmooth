@@ -11,7 +11,13 @@ import pywritesmooth.Smooth.Smoother as sm
 @click.option('-t', '--train', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to train the model(s)')
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'st'], case_sensitive=False), help = 'Models to be trained, options are GAN or ST (StyleTransfer)')
 def main(smooth = None, smooth_model = None, train = None, train_models = None):
-    """The main routine."""
+    """The main routine.
+    
+    
+    pywritesmooth --smooth <samplehw>  # Show to screen with default model
+pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, Style-transfer, etc.)
+pywritesmooth --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+    """
 
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
@@ -63,6 +69,14 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
     return EXIT_SUCCESS
 
 def BuildModels(hw, modelsToTrain):
+    """
+    Foreach model type:
+	    Input --> Clean and transform input  --> Cleaned input
+	    Cleaned input --> Identify features --> Feature vector
+	    Cleaned input, feature vector --> Train the model --> Trained model
+	    Trained model --> Test the model --> Model metrics/error
+    """
+
     for model in modelsToTrain:
         model.train(hw.trainVector)
         model.save()
@@ -80,6 +94,13 @@ def LoadModels(modelsToLoad):
     return modelsToLoad
 
 def SmoothWriting(hwSample, modelToUse):
+    """
+    Input Writing to Smooth --> Clean and transform input  --> Cleaned input
+    Cleaned input, Trained model --> SmoothHandwriting --> Smoothed writing
+    Smoothed writing --> OutputWriting --> Image file
+
+    """
+
     sm = Smoother(hwSample, modelToUse)
 
     sm.merge()

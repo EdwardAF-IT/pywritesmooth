@@ -28,6 +28,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
             except:
                 calledName = os.path.basename(__file__)  # When called as a script
 
+            print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
             print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | st>  --OR--")
             print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | st>")
 

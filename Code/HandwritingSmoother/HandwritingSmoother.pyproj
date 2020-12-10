@@ -13,6 +13,9 @@
     <RootNamespace>HandwritingSmoother</RootNamespace>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml" --train-models ltsm</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +26,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="pywritesmooth\Data\StrokeDataset.py" />
+    <Compile Include="pywritesmooth\Data\__init__.py" />
+    <Compile Include="pywritesmooth\TrainSmoother\LTSMTrainer.py" />
+    <Compile Include="pywritesmooth\Data\StrokeSet.py" />
+    <Compile Include="pywritesmooth\Data\Stroke.py" />
     <Compile Include="__main__.py">
       <SubType>Code</SubType>
     </Compile>
@@ -54,9 +62,6 @@
     <Compile Include="pywritesmooth\TrainSmoother\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pywritesmooth\Utility\HandwritingData.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="pywritesmooth\Utility\Letter.py">
       <SubType>Code</SubType>
     </Compile>
@@ -75,6 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="pywritesmooth\" />
+    <Folder Include="pywritesmooth\Data\" />
     <Folder Include="pywritesmooth\Smooth\" />
     <Folder Include="pywritesmooth\TrainSmoother\" />
     <Folder Include="pywritesmooth\Utility\" />

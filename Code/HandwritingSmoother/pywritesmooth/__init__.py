@@ -6,4 +6,5 @@ __all__ = ['HandwritingSmoother']
 from . import *
 from .Smooth import *
 from .TrainSmoother import *
+from .Data import *
 from .Utility import *

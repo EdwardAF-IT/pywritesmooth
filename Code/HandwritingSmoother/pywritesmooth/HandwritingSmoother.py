@@ -52,7 +52,6 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                     if modelName == 'gan':
                         models.append(gan.GANTrainer())
 
-                print(models)
                 #models = BuildModels(hw, models)
                 #TestModels(models)
 

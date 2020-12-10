@@ -10,6 +10,40 @@ class StrokeSet(object):
 
     def __init__(self):
         self.strokes = []
+        self.onlineXMLFull = ''
+        self.onlineASCIIFull = ''
+        self.onlineImageFull = ''
+
+    def assemblePaths(self, inputFileName):
+        """assemblePaths
+
+           Break apart the path information and reform it into paths for related data like the text and image files.  This is possible because the IAM online dataset follows a very clean and predictable naming scheme.
+        """
+        inputFileName = inputFileName.lower()
+        onlineXMLFolders = [r'linestrokes-all\linestrokes', r'original-xml-all\original', r'original-xml-part\original']
+        onlineASCIIFolder = r'ascii-all\ascii'
+        onlineImageFolder = r'lineimages-all\lineimages'
+
+        self.onlineXMLFull = inputFileName   # Full XML file with path
+
+        for folder in onlineXMLFolders:
+            if folder in inputFileName:
+                folderStart = inputFileName.index(folder)
+                folderEnd = folderStart + len(folder)
+
+                onlineFileName = os.path.split(inputFileName)[1]        # i.e. a01-000u-01.xml
+                onlineFileBase = onlineFileName[:-4]                    # i.e. a01-000u-01
+                onlineASCIIFile = onlineFileBase + r'.txt'              # i.e. a01-000u-01.txt
+                onlineImageFile = onlineFileBase + r'.tif'              # i.e. a01-000u-01.tif
+
+                nameStart = inputFileName.index(onlineFileName)
+                groupFolder = inputFileName[folderEnd+1:nameStart]        # i.e. a01\a01-000
+
+                onlinePath = inputFileName[:folderStart]                # i.e. C:\Code\SMU\Capstone\Data\IAM Original
+                onlineXMLFolder = folder                                # i.e. linestrokes-all\linestrokes
+
+                self.onlineASCIIFull = os.path.join(onlinePath, onlineASCIIFolder, groupFolder, onlineASCIIFile)
+                self.onlineImageFull = os.path.join(onlinePath, onlineImageFolder, groupFolder, onlineImageFile)
 
     def load(self, inputFileName):
         """load
@@ -17,7 +51,11 @@ class StrokeSet(object):
            inputFileName is a single file to load.  Each file will be loaded as a list of strokes.
         """
 
+        assemblePaths(inputFileName)
+
         try:
+            print(inputFileName)
+
             # Load stroke information from XML file
             raw = []
             with open(inputFileName, "r") as file:

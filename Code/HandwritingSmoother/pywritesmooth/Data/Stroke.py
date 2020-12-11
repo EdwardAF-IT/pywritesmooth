@@ -7,8 +7,15 @@ class Stroke(object):
        This class manages input data, specifically in the form of "online" format, where the data is a time-series of {x,y} coordinates.  A stroke is conceptually part of a StrokeSet, which is a group of strokes that, together, forms a single handwriting sample.
     """
 
-    def __init__(self):
+    def init(self):
         self.points = []
+
+    def __init__(self):
+        self.init()
+
+    def __init__(self, strokeXML):
+        self.init()
+        self.load(strokeXML)
 
     def load(self, strokeXML):
         """load

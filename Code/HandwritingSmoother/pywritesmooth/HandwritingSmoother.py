@@ -40,10 +40,9 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 print("Please specify --train-models <model> switch when using --train")
                 return EXIT_FAILURE
             else:
-                hwData = sds.StrokeDataset()
                 hwInput = glob.glob(train)
 
-                writingSample = hwData.load(hwInput)
+                writingSample = sds.StrokeDataset(hwInput)
                 models = []
 
                 for modelName in train_models:

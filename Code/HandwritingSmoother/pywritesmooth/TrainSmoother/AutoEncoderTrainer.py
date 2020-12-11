@@ -1,3 +1,4 @@
+import logging as log
 from .TrainerInterface import TrainerInterface
 
 class AutoEncoderTrainer(TrainerInterface):

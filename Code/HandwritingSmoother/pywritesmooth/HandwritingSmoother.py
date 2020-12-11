@@ -1,4 +1,4 @@
-import sys, os, click, glob
+import sys, os, click, glob, logging as log
 
 import pywritesmooth.Smooth.Smoother as sm
 import pywritesmooth.TrainSmoother.LTSMTrainer as ltsm
@@ -20,16 +20,24 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
     pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
     pywritesmooth --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
     """
-
+    
+    # Constants
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
 
     try:
+        log.basicConfig(filename='pywritesmooth.log', level=log.INFO, 
+                        format=r'%(asctime)s %(levelname)s (%(filename)s/%(funcName)s:%(lineno)d): %(message)s', 
+                        datefmt='%d-%b-%y %H:%M:%S')
+        log.debug("Starting app")
+
         if train is None and smooth is None:
             try:
                 calledName = __loader__.fullname  # When called as a module
+                log.debug("Running as a module")
             except:
                 calledName = os.path.basename(__file__)  # When called as a script
+                log.debug("Running as a script")
 
             print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
             print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | ltsm>  --OR--")
@@ -38,8 +46,11 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
         if not train is None:
             if train_models is None:
                 print("Please specify --train-models <model> switch when using --train")
+                log.critical("Training switch missing or incorrect; exiting")
                 return EXIT_FAILURE
             else:
+                log.info(f"Training model data: {train}")
+                log.info(f"Training model args: {train_models}")
                 hwInput = glob.glob(train)
 
                 writingSample = sds.StrokeDataset(hwInput)
@@ -57,17 +68,22 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
         if not smooth is None:
             if smooth_model is None:
                 print("Please specify --smooth_model <gan | ltsm> switch when using --smooth")
+                log.critical("Smoothing switch missing or incorrect; exiting")
                 return EXIT_FAILURE
             else:
+                log.info(f"Smoothing models selected: {smooth_model}")
                 hw = Handwriting(smooth_model)
                 SmoothWriting(hw, switcher.get(smooth_model))
     except NotImplementedError as nie:
         print("Ran into some code that needs implementation: ", nie)
+        log.critical(f"Ran into some code that needs implementation; exiting", exc_info=True)
         return EXIT_FAILURE
     except:
-        print("Exception: ", sys.exc_info())
+        print("Exception: ",sys.exc_info())
+        log.critical(f"Unexpected exception", exc_info=True)
         return EXIT_FAILURE
 
+    log.info("Exiting normally")
     return EXIT_SUCCESS
 
 def BuildModels(hw, modelsToTrain):

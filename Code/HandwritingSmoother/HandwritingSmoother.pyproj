@@ -65,9 +65,6 @@
     <Compile Include="pywritesmooth\Utility\Letter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pywritesmooth\Utility\Log.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="pywritesmooth\Utility\__init__.py">
       <SubType>Code</SubType>
     </Compile>

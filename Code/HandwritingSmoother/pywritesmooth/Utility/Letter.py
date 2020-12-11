@@ -1,3 +1,5 @@
+import logging as log
+
 class Letter(object):
     """description of class"""
 

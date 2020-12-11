@@ -1,3 +1,4 @@
+import logging as log
 from abc import ABCMeta, abstractmethod
 
 class TrainerInterface(metaclass=ABCMeta):

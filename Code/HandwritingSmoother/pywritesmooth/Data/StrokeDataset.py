@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, logging as log
 import pywritesmooth.Data.StrokeSet as strokeset
 
 class StrokeDataset(object):
@@ -8,12 +8,15 @@ class StrokeDataset(object):
     """
 
     def init(self):
+        log.debug("Init")
         self.strokesets = []
 
     def __init__(self):
+        log.debug("Default contructor")
         self.init()
 
     def __init__(self, inputFiles):
+        log.debug("Loader contructor")
         self.init()
         self.load(inputFiles)
         
@@ -22,7 +25,10 @@ class StrokeDataset(object):
 
            inputFiles is a list of files to load.  Each file will be loaded as a strokeset.
         """
-        
+
+        log.debug(f"Loading dataset {inputFiles}")  
+        print(f"Loading dataset")
+
         # Load stroke information from XML files
         for file in inputFiles:
             self.strokesets.append(strokeset.StrokeSet(file))

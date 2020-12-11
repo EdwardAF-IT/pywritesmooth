@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as bs
-import collections as col
+import collections as col, logging as log
 
 class Stroke(object):
     """Stroke
@@ -8,12 +8,15 @@ class Stroke(object):
     """
 
     def init(self):
+        log.debug("Init")
         self.points = []
 
     def __init__(self):
+        log.debug("Default contructor")
         self.init()
 
     def __init__(self, strokeXML):
+        log.debug("Loader contructor")
         self.init()
         self.load(strokeXML)
 
@@ -24,11 +27,18 @@ class Stroke(object):
         """
 
         # Load points from stroke XML
+        log.debug(f"Loading from raw stroke: {strokeXML}")
         pointsXML = bs(str(strokeXML), 'lxml')
+        log.debug(f"Stroke parsed XML: {pointsXML}")
         points = pointsXML.find_all("point")
+        log.debug(f"Loading points: {points}")
 
-        for point in points:    # Enumerate points in each stroke
-            x = point["x"]
-            y = point["y"]
-            t = point["time"]
-            self.points.append((x, y, t))
+        try:
+            for point in points:    # Enumerate points in each stroke
+                x = point["x"]
+                y = point["y"]
+                t = point["time"]
+                log.info(f"Loading point x, y, time: ({x}, {y}, {t})")
+                self.points.append((x, y, t))
+        except:
+            log.warning(f"Could not parse point {point}", exc_info=True)

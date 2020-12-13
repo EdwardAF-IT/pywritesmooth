@@ -14,7 +14,7 @@
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\*\*\*" --train-models ltsm</CommandLineArguments>
+    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml" --train-models lstm</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -28,9 +28,10 @@
   <ItemGroup>
     <Compile Include="pywritesmooth\Data\StrokeDataset.py" />
     <Compile Include="pywritesmooth\Data\__init__.py" />
-    <Compile Include="pywritesmooth\TrainSmoother\LTSMTrainer.py" />
+    <Compile Include="pywritesmooth\TrainSmoother\LSTMTrainer.py" />
     <Compile Include="pywritesmooth\Data\StrokeSet.py" />
     <Compile Include="pywritesmooth\Data\Stroke.py" />
+    <Compile Include="pywritesmooth\Utility\StrokeHelper.py" />
     <Compile Include="__main__.py">
       <SubType>Code</SubType>
     </Compile>

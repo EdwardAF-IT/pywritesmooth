@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import collections as col, logging as log
+import numpy as np
+import pywritesmooth.Utility.StrokeHelper as sh
 
 class Stroke(object):
     """Stroke
@@ -38,7 +40,24 @@ class Stroke(object):
                 x = point["x"]
                 y = point["y"]
                 t = point["time"]
-                log.info(f"Loading point x, y, time: ({x}, {y}, {t})")
+                log.debug(f"Loading point x, y, time: ({x}, {y}, {t})")
                 self.points.append((x, y, t))
         except:
             log.warning(f"Could not parse point {point}", exc_info=True)
+
+    def getPoints(self):
+        """getPoints
+
+           Return the collection of stroke points as a 2D numpy array.
+        """
+
+        return(np.array(self.points))
+
+    def getNormalizedPoints(self):
+        """getNormalizedPoints
+
+           Return the collection of stroke points as a 2D numpy array where the minimum point valules are 0.
+        """
+
+        helper = sh.StrokeHelper()
+        return(helper.normalizePoints(self.points))

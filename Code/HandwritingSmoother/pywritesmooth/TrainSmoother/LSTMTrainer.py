@@ -1,7 +1,7 @@
 import logging as log
 from .TrainerInterface import TrainerInterface
 
-class LTSMTrainer(TrainerInterface):
+class LSTMTrainer(TrainerInterface):
     """description of class"""
 
     def __init__(self):

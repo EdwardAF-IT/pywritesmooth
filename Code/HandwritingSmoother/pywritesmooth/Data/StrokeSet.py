@@ -1,7 +1,12 @@
-import sys, os, glob, logging as log
+import sys, os, glob, logging as log, numpy as np
 from bs4 import BeautifulSoup as bs
 import pywritesmooth.Data.Stroke as stroke
 from PIL import Image
+import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import matplotlib.patches as patches
+import pywritesmooth.Utility.StrokeHelper as sh
+import matplotlib.image as mpimg
 
 class StrokeSet(object):
     """StrokeSet
@@ -13,6 +18,7 @@ class StrokeSet(object):
         log.debug("Init")
         self.strokes = []
         self.onlineXMLFull = ''
+        self.onslineXMLFile = ''
         self.onlineASCIIFull = ''
         self.onlineImageFull = ''
 
@@ -46,6 +52,7 @@ class StrokeSet(object):
 
                 onlineFileName = os.path.split(inputFileName)[1]        # i.e. a01-000u-01.xml
                 onlineFileBase = onlineFileName[:-4]                    # i.e. a01-000u-01
+                self.onslineXMLFile = onlineFileBase
 
                 nameStart = inputFileName.index(onlineFileName)
                 groupFolder = inputFileName[folderEnd+1:nameStart]      # i.e. a01\a01-000
@@ -98,6 +105,9 @@ class StrokeSet(object):
                 log.debug(f"Loading strokes {strokes}")  
                 for strokeXML in strokes:         # Enumerate strokes in each set
                     self.strokes.append(stroke.Stroke(strokeXML))
+
+            self.showStrokeset()
+            self.getImage()
         except:
             log.error(f"Could not open input file {inputFileName}", exc_info=True)
             print("Exception: ", sys.exc_info())
@@ -113,8 +123,46 @@ class StrokeSet(object):
 
     def getImage(self):
         try:
-            im = Image.open(self.onlineImageFull)
-            log.debug(f"Corresponding image file: {self.onlineImageFull}")
-            im.show()
+            #im = Image.open(self.onlineImageFull)
+            log.info(f"Corresponding image file: {self.onlineImageFull}")
+            #im.show()
+            img = plt.imread(self.onlineImageFull)
+            plt.imshow(img)
         except:
             log.warning(f"Could not open corresponding image file {self.onlineImageFull}", exc_info=True)
+
+    def showStrokeset(self):
+        try:
+            log.debug(f"Raw strokes: {self.strokes}")
+
+            samplePoints = []
+            codes = []
+            for stroke in self.strokes:  # Build parallel point and code lists from all strokes in the set
+                log.debug(f"Raw stroke: {stroke}")
+
+                points = [(x[0], x[1], x[2]) for x in stroke.getPoints()]  # Extract the points from stroke
+                pointCodes = [Path.MOVETO] + list(np.repeat(Path.LINETO, len(points) - 1))  # Add the right amount of codes for current stroke
+
+                [samplePoints.append(i) for i in points]  # Accumulate point tuples
+                [codes.append(i) for i in pointCodes]     # Accumulate corresponding codes
+           
+            # Normalize by subtracting minimums to 0-base stroke set
+            helper = sh.StrokeHelper()
+            nPoints = helper.normalizePoints(samplePoints)  # Helper does the 0-basing
+            ymax = nPoints.max(axis=0)[1]
+            vertices = [(x[0], ymax-x[1]) for x in nPoints]      # Pull out just x,y tuples
+
+            log.info(f"Drawing stroke set for {self.onslineXMLFile}")
+            log.debug(f"Vertices: {max(vertices)[0]} {min(vertices)[1]} {vertices}")
+            log.debug(f"Codes: {codes}")
+
+            # Build path for matplotlib
+            fig, ax = plt.subplots()
+            path = Path(vertices, codes)
+            patch = patches.PathPatch(path, facecolor='none', lw=2)
+            ax.add_patch(patch)
+            ax.set_xlim(0, max(vertices)[0])
+            ax.set_ylim(0, ymax)
+            plt.show()
+        except:
+            log.error(f"Could not create stroke set display for {self.onslineXMLFile}", exc_info=True)

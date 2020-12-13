@@ -1,7 +1,7 @@
 import sys, os, click, glob, logging as log
 
 import pywritesmooth.Smooth.Smoother as sm
-import pywritesmooth.TrainSmoother.LTSMTrainer as ltsm
+import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
 import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke
 import pywritesmooth.Data.StrokeSet as strokeset
@@ -9,9 +9,9 @@ import pywritesmooth.Data.StrokeDataset as sds
 
 @click.command()
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
-@click.option('-sm', '--smooth-model', default = 'gan', type=click.Choice(['gan', 'ltsm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LTSM')
+@click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
 @click.option('-t', '--train', type=click.STRING, help = 'Image file of printed digits or letters in upper or lower case to train the model(s)')
-@click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'ltsm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LTSM')
+@click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
 def main(smooth = None, smooth_model = None, train = None, train_models = None):
     """The main routine.
     
@@ -40,8 +40,8 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 log.debug("Running as a script")
 
             print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
-            print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | ltsm>  --OR--")
-            print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | ltsm>")
+            print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | lstm>  --OR--")
+            print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
 
         if not train is None:
             if train_models is None:
@@ -57,8 +57,8 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 models = []
 
                 for modelName in train_models:
-                    if modelName == 'ltsm':
-                        models.append(ltsm.LTSMTrainer())
+                    if modelName == 'lstm':
+                        models.append(lstm.LSTMTrainer())
                     if modelName == 'gan':
                         models.append(gan.GANTrainer())
 

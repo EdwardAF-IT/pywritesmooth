@@ -1,5 +1,6 @@
 import sys, os, logging as log
 import pywritesmooth.Data.StrokeSet as strokeset
+import pywritesmooth.Utility.StrokeHelper as sh
 
 class StrokeDataset(object):
     """StrokeDataset

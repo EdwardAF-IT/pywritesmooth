@@ -106,8 +106,8 @@ class StrokeSet(object):
                 for strokeXML in strokes:         # Enumerate strokes in each set
                     self.strokes.append(stroke.Stroke(strokeXML))
 
-            self.showStrokeset()
             self.getImage()
+            self.showStrokeset()
         except:
             log.error(f"Could not open input file {inputFileName}", exc_info=True)
             print("Exception: ", sys.exc_info())
@@ -123,11 +123,10 @@ class StrokeSet(object):
 
     def getImage(self):
         try:
-            #im = Image.open(self.onlineImageFull)
             log.info(f"Corresponding image file: {self.onlineImageFull}")
             #im.show()
             img = plt.imread(self.onlineImageFull)
-            plt.imshow(img)
+            #plt.imshow(img)
         except:
             log.warning(f"Could not open corresponding image file {self.onlineImageFull}", exc_info=True)
 
@@ -149,20 +148,28 @@ class StrokeSet(object):
             # Normalize by subtracting minimums to 0-base stroke set
             helper = sh.StrokeHelper()
             nPoints = helper.normalizePoints(samplePoints)  # Helper does the 0-basing
-            ymax = nPoints.max(axis=0)[1]
-            vertices = [(x[0], ymax-x[1]) for x in nPoints]      # Pull out just x,y tuples
+            ymax = nPoints.max(axis=0)[1]                   # Sum the 3 rows in nPoints and take the second, which is y
+            vertices = [(x[0], ymax-x[1]) for x in nPoints]      # Pull out just x,y tuples where y is subtracted from its max to appear right-side up
+            xmax = max(vertices)[0]                           # X is the 0th element of the tuples in vertices, find its maximum
 
             log.info(f"Drawing stroke set for {self.onslineXMLFile}")
             log.debug(f"Vertices: {max(vertices)[0]} {min(vertices)[1]} {vertices}")
             log.debug(f"Codes: {codes}")
 
             # Build path for matplotlib
-            fig, ax = plt.subplots()
             path = Path(vertices, codes)
             patch = patches.PathPatch(path, facecolor='none', lw=2)
-            ax.add_patch(patch)
-            ax.set_xlim(0, max(vertices)[0])
+
+            # Plot for rendering
+            fig, ax = plt.subplots(figsize = (8, 2), facecolor='w', edgecolor='k')
+            fig.canvas.set_window_title(f"Online rendering for {self.onslineXMLFile}")
+
+            ax.add_patch(patch)     # Point plot of the handwriting
+            ax.set_aspect('equal')  # Lock the aspect ratio so writing looks like it did originally
+            ax.set_xlim(0, xmax)    # Size plot to the dimensions of the handwriting
             ax.set_ylim(0, ymax)
+            ax.axis('off')          # Turn off plot axes since it isn't really a traditional plot
+            plt.tight_layout()      # Trim excess window whitespace
             plt.show()
         except:
             log.error(f"Could not create stroke set display for {self.onslineXMLFile}", exc_info=True)

@@ -106,8 +106,8 @@ class StrokeSet(object):
                 for strokeXML in strokes:         # Enumerate strokes in each set
                     self.strokes.append(stroke.Stroke(strokeXML))
 
-            self.getImage()
-            self.showStrokeset()
+            #self.getImage()
+            #self.showStrokeset()
         except:
             log.error(f"Could not open input file {inputFileName}", exc_info=True)
             print("Exception: ", sys.exc_info())

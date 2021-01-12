@@ -13,11 +13,11 @@ class StrokeDataset(object):
         self.strokesets = []
 
     def __init__(self):
-        log.debug("Default contructor")
+        log.debug("Default constructor")
         self.init()
 
     def __init__(self, inputFiles):
-        log.debug("Loader contructor")
+        log.debug("Loader constructor")
         self.init()
         self.load(inputFiles)
         

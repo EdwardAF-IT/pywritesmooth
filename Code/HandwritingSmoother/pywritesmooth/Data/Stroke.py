@@ -14,11 +14,11 @@ class Stroke(object):
         self.points = []
 
     def __init__(self):
-        log.debug("Default contructor")
+        log.debug("Default constructor")
         self.init()
 
     def __init__(self, strokeXML):
-        log.debug("Loader contructor")
+        log.debug("Loader constructor")
         self.init()
         self.load(strokeXML)
 

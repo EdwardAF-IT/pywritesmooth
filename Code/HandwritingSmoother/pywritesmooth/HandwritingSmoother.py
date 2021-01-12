@@ -6,7 +6,7 @@ import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke
 import pywritesmooth.Data.StrokeSet as strokeset
 import pywritesmooth.Data.StrokeDataset as sds
-import pywritesmooth.Data.StrokeDataModule as sdm
+#import pywritesmooth.Data.StrokeDataModule as sdm
 
 @click.command()
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
@@ -54,7 +54,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 log.info(f"Training model args: {train_models}")
                 hwInput = glob.glob(train)
 
-                writingSample = sds.StrokeDataModule(osFiles = hwInput)
+                writingSample = sds.StrokeDataset(hwInput)
                 models = []
 
                 for modelName in train_models:

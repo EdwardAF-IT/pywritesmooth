@@ -3,7 +3,7 @@ from .TrainerInterface import TrainerInterface
 
 import numpy as np
 import pandas as pd
-pd.options.display.float_format = '{:,.5f}'.format
+pd.options.display.float_format = '{:,.3f}'.format
 
 from IPython.display import display
 

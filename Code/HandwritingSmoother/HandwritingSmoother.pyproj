@@ -26,6 +26,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="pywritesmooth\Data\StrokeDataModule.py" />
     <Compile Include="pywritesmooth\Data\StrokeDataset.py" />
     <Compile Include="pywritesmooth\Data\__init__.py" />
     <Compile Include="pywritesmooth\TrainSmoother\LSTMTrainer.py" />

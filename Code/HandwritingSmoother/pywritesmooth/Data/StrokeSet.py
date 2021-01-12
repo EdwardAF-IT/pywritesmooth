@@ -23,11 +23,11 @@ class StrokeSet(object):
         self.onlineImageFull = ''
 
     def __init__(self):
-        log.debug("Default contructor")
+        log.debug("Default constructor")
         self.init()
 
     def __init__(self, inputFileName):
-        log.debug("Loader contructor")
+        log.debug("Loader constructor")
         self.init()
         self.load(inputFileName)
 
@@ -100,7 +100,6 @@ class StrokeSet(object):
             allStrokeSets = xml.find_all("strokeset")
             for sset in allStrokeSets:      # Enumerate stroke sets in the file
                 strokes = sset.find_all("stroke")
-
 
                 log.debug(f"Loading strokes {strokes}")  
                 for strokeXML in strokes:         # Enumerate strokes in each set

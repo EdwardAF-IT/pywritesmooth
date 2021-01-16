@@ -1,5 +1,5 @@
 __author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
 __credits__ = 'Dr John Santerre'
-__all__ = ['StrokeDataset', 'StrokeSet', 'Stroke', 'StrokeDataModule']
+__all__ = ['StrokeDataset', 'StrokeSet', 'Stroke', 'StrokeDataModule', 'DataLoader']
 
 from . import *

@@ -1,7 +1,7 @@
 import sys, os, click, glob, logging as log
 
 import pywritesmooth.Smooth.Smoother as sm
-import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
+#import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
 import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke
 import pywritesmooth.Data.StrokeSet as strokeset
@@ -13,13 +13,17 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
 @click.option('-t', '--train', type=click.STRING, help = 'Image file of printed digits or letters in upper or lower case to train the model(s)')
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
-def main(smooth = None, smooth_model = None, train = None, train_models = None):
+@click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
+@click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
+def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None):
     """The main routine.
     
     
     pywritesmooth --smooth <samplehw>  # Show to screen with default model
     pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
-    pywritesmooth --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+    pywritesmooth --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+    pywritesmooth --pickled-data <filename> --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
+    pywritesmooth --pickled-data <filename> --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
     """
     
     # Constants
@@ -44,6 +48,16 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
             print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | lstm>  --OR--")
             print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
 
+        # Default model file
+        hwModelSave = ".\hwSynthesis.model"
+        if not saved_model is None:
+            hwModelSave = saved_model
+
+        # Default pickled data file
+        hwDataSave = ".\hwData.pkl"
+        if not pickled_data is None:
+            hwDataSave = pickled_data
+
         if not train is None:
             if train_models is None:
                 print("Please specify --train-models <model> switch when using --train")
@@ -54,14 +68,14 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None):
                 log.info(f"Training model args: {train_models}")
                 hwInput = glob.glob(train)
 
-                writingSample = sds.StrokeDataset(hwInput)
+                writingSample = sds.StrokeDataset(hwInput, hwDataSave)
                 models = []
 
-                for modelName in train_models:
-                    if modelName == 'lstm':
-                        models.append(lstm.LSTMTrainer())
-                    if modelName == 'gan':
-                        models.append(gan.GANTrainer())
+                #for modelName in train_models:
+                #    if modelName == 'lstm':
+                #        models.append(lstm.LSTMTrainer())
+                #    if modelName == 'gan':
+                #        models.append(gan.GANTrainer())
 
                 #models = BuildModels(writingSample, models)
                 #TestModels(models)
@@ -97,8 +111,7 @@ def BuildModels(hw, modelsToTrain):
     """
 
     for model in modelsToTrain:
-        model.train(hw.trainVector)
-        #model.save()
+        model.train(hw, savedModel)
 
     return modelsToTrain
 

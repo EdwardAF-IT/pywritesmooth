@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class HandwritingSynthesisModel(nn.Module):
     """
-    Code credit: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
+    Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
 
     def __init__(self, hidden_size = 256, n_gaussians = 20, Kmixtures = 10, dropout = 0.2, alphabet_size = 64):

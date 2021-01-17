@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 class LSTMTrainer(TrainerInterface):
     """
-    Code credit: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
+    Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
 
     def __init__(self):
@@ -40,7 +40,7 @@ class LSTMTrainer(TrainerInterface):
             model.load_state_dict(torch.load(modelSaveLoc))
         else:
             model.eval()
-            model = train_network(model, modelSaveLoc, epochs = 2, generate = True)
+            model = train_network(model, trainStrokeset, modelSaveLoc, epochs = 2, generate = True)
 
         self.trained_model = model
 
@@ -178,8 +178,8 @@ class LSTMTrainer(TrainerInterface):
     
         return torch.mean(loss);
 
-    def train_network(model, modelSaveLoc, epochs = 5, generate = True):
-        data_loader = DataLoader(n_batch, sequence_length, 20, U_items=U_items) # 20 = datascale
+    def train_network(model, trainStrokeset, modelSaveLoc, epochs = 5, generate = True):
+        data_loader = DataLoader(trainStrokeset, n_batch, sequence_length, 20, U_items=U_items) # 20 = datascale
     
         optimizer = optim.Adam(model.parameters(), lr=0.005)
     

@@ -10,14 +10,8 @@ class GANTrainer(TrainerInterface):
     def train(self):
         raise NotImplementedError
 
-    def test():
+    def train_network():
         raise NotImplementedError
 
-    def getError():
-        raise NotImplementedError
-
-    def save():
-        raise NotImplementedError
-
-    def load():
+    def loss_fn():
         raise NotImplementedError

@@ -11,18 +11,22 @@ class Stroke(object):
 
     def init(self):
         log.debug("Init")
-        self.points = []
+        self.orig_points = []       # Raw from the input file
+        self.points = []            # After any offsets are applied
 
     def __init__(self):
         log.debug("Default constructor")
         self.init()
 
-    def __init__(self, strokeXML):
+    def __init__(self, strokeXML, x_offset = 0, y_offset = 0):
         log.debug("Loader constructor")
         self.init()
-        self.load(strokeXML)
+        self.load(strokeXML, x_offset, y_offset)
 
-    def load(self, strokeXML):
+    def __len__(self):
+        return(len(self.getPoints()))
+
+    def load(self, strokeXML, x_offset = 0, y_offset = 0):
         """load
 
            strokeXML is an XML of a stroke, which is a collection of points.
@@ -37,21 +41,31 @@ class Stroke(object):
 
         try:
             for point in points:    # Enumerate points in each stroke
-                x = point["x"]
-                y = point["y"]
-                t = point["time"]
+                x = int(point["x"])
+                y = int(point["y"])
+                t = float(point["time"])
                 log.debug(f"Loading point x, y, time: ({x}, {y}, {t})")
-                self.points.append((x, y, t))
+                log.debug(f"Offset point x, y, time: ({x - x_offset}, {y - y_offset}, {t})")
+                self.orig_points.append((x, y, t))
+                self.points.append((x - x_offset, y - y_offset, t))
         except:
             log.warning(f"Could not parse point {point}", exc_info=True)
 
-    def getPoints(self):
-        """getPoints
+    def asNumpyArray(self):
+        """asNumpyArray
 
            Return the collection of stroke points as a 2D numpy array.
         """
 
         return(np.array(self.points))
+
+    def getPoints(self):
+        """getPoints
+
+           Return the collection of stroke points.
+        """
+
+        return(self.points)
 
     def getNormalizedPoints(self):
         """getNormalizedPoints

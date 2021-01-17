@@ -19,17 +19,9 @@ class TrainerInterface(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def test():
+    def train_network():
         raise NotImplementedError
 
     @abstractmethod
-    def getError():
-        raise NotImplementedError
-
-    @abstractmethod
-    def save():
-        raise NotImplementedError
-
-    @abstractmethod
-    def load():
+    def loss_fn():
         raise NotImplementedError

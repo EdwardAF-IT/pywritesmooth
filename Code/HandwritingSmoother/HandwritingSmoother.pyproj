@@ -14,7 +14,7 @@
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml" --train-models lstm -m ".\hwSynthesis.model" -p ".\hwData.pkl"</CommandLineArguments>
+    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u*.xml" --train-models lstm -m ".\hwSynthesis.model" -p ".\hwData.pkl"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -49,19 +49,7 @@
     <Compile Include="pywritesmooth\Smooth\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pywritesmooth\TrainSmoother\AutoEncoderTrainer.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="pywritesmooth\TrainSmoother\GANTrainer.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="pywritesmooth\TrainSmoother\RNNTrainer.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="pywritesmooth\TrainSmoother\StyleTransferTrainer.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="pywritesmooth\TrainSmoother\SVDTrainer.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\TrainSmoother\TrainerInterface.py">

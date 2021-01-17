@@ -16,11 +16,17 @@ class StrokeSet(object):
 
     def init(self):
         log.debug("Init")
-        self.strokes = []
+        self.strokes = []       # List of online x,y point groups that comprise each sample
+        self.text = ""          # The ascii version of the sample
+
         self.onlineXMLFull = ''
         self.onslineXMLFile = ''
         self.onlineASCIIFull = ''
         self.onlineImageFull = ''
+
+        self.x_offset = 1e20
+        self.y_offset = 1e20
+        self.y_height = 0
 
     def __init__(self):
         log.debug("Default constructor")
@@ -30,6 +36,9 @@ class StrokeSet(object):
         log.debug("Loader constructor")
         self.init()
         self.load(inputFileName)
+
+    def __len__(self):
+        return(len(self.strokes))
 
     def assemblePaths(self, inputFileName):
         """assemblePaths
@@ -51,6 +60,7 @@ class StrokeSet(object):
                 folderEnd = folderStart + len(folder)
 
                 onlineFileName = os.path.split(inputFileName)[1]        # i.e. a01-000u-01.xml
+                line_number = int(onlineFileName[-6:-4]) - 1            # i.e. 01                
                 onlineFileBase = onlineFileName[:-4]                    # i.e. a01-000u-01
                 self.onslineXMLFile = onlineFileBase
 
@@ -65,6 +75,7 @@ class StrokeSet(object):
 
                 self.onlineASCIIFull = onlineASCIIFile
                 self.onlineImageFull = os.path.join(onlinePath, onlineImageFolder, groupFolder, onlineImageFile)
+                self.text = self.loadText(line_number)
 
                 log.debug(f"Folder: {folder}")
                 log.debug(f"onlineXMLFull: {self.onlineXMLFull}")
@@ -95,6 +106,25 @@ class StrokeSet(object):
                 raw = "".join(raw)
                 xml = bs(raw, 'lxml')
                 log.debug(f"Parsed XML input: {xml}")
+        except:
+            log.error(f"Could not open input file {inputFileName}", exc_info=True)
+            print("Exception: ", sys.exc_info())
+            return
+
+        try:
+            # Get offset information
+            strokeOffsets = xml.find("whiteboarddescription")
+            diagOffset = strokeOffsets.find("diagonallyoppositecoords")
+            vertOffset = strokeOffsets.find("verticallyoppositecoords")
+            horiOffset = strokeOffsets.find("horizontallyoppositecoords")
+
+            # Calculate offsets
+            self.x_offset = min(self.x_offset, int(diagOffset["x"]), int(vertOffset["x"]), int(horiOffset["x"]))
+            self.y_offset = min(self.y_offset, int(diagOffset["y"]), int(vertOffset["y"]), int(horiOffset["y"]))
+            self.y_height = max(self.y_height, int(diagOffset["y"]), int(vertOffset["y"]), int(horiOffset["y"]))
+            self.y_height -= self.y_offset
+            self.x_offset -= 100
+            self.y_offset -= 100
 
             # Extract stroke information
             allStrokeSets = xml.find_all("strokeset")
@@ -103,22 +133,76 @@ class StrokeSet(object):
 
                 log.debug(f"Loading strokes {strokes}")  
                 for strokeXML in strokes:         # Enumerate strokes in each set
-                    self.strokes.append(stroke.Stroke(strokeXML))
+                    self.strokes.append(stroke.Stroke(strokeXML, self.x_offset, self.y_offset))
 
             #self.getImage()
             #self.showStrokeset()
         except:
-            log.error(f"Could not open input file {inputFileName}", exc_info=True)
+            log.error(f"Could not process file {inputFileName}", exc_info=True)
             print("Exception: ", sys.exc_info())
 
-    def getText(self):
+    def asDeltaArray(self):
+        """asDeltaArray
+
+           Convert strokes, which are stored in absolute coordinates, into a numpy array of the 
+           differences between each point.  Each row is [delta_x, delta_y, strokeEndFlag].
+           Adapted from https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis.
+        """
+
+        # Initialize a zero matrix of the right size
+        n_point = 0
+        for i in range(len(self.strokes)):
+            n_point += len(self.strokes[i])
+        stroke_data = np.zeros((n_point, 3), dtype=np.int16)
+        log.debug(f"Convert to array input: Len={len(stroke_data)} Strokes={stroke_data}")
+
+        # Compute the deltas and save in numpy matrix
+        prev_x = 0
+        prev_y = 0
+        counter = 0
+        for j in range(len(self.strokes)):          # Enumerate strokes
+            points = self.strokes[j].getPoints()
+            for k in range(len(points)):            # Enumerate points in each stroke
+                log.debug(f"Convert to array stroke data: j={j}, k={k}, {counter}, x={int(points[k][0])}, y={int(points[k][1])}, prev_x={prev_x}, prev_y={prev_y}")
+                stroke_data[counter, 0] = int(points[k][0]) - prev_x
+                stroke_data[counter, 1] = int(points[k][1]) - prev_y
+                log.debug(f"Convert to array delta: {stroke_data[counter, 0]} {stroke_data[counter, 1]}")
+                    
+                prev_x = int(points[k][0])
+                prev_y = int(points[k][1])
+                stroke_data[counter, 2] = 0
+                if (k == (len(self.strokes[j])-1)): # end of stroke
+                    stroke_data[counter, 2] = 1
+                counter += 1
+
+        log.debug(f"Convert to array output: {self.arrayToString(stroke_data)}")
+        return stroke_data
+
+    def arrayToString(self, arr):
+        s = ""
+
+        for i in range(len(arr)):
+            #log.debug(f"{np.array_str(arr[i])}")
+            s += np.array_str(arr[i]) + '\n'
+
+        return(s)
+
+    def loadText(self, line_number):
         try:
             with open(self.onlineASCIIFull, "r") as file:
-                lines = file.readlines()
-                log.debug(f"Corresponding text: {lines}")
-                return(lines)
+                s = file.read()
+
+            s = s[s.find("CSR"):]       # The second and more accurate text block
+
+            if len(s.split("\n")) > line_number+2:
+                s = s.split("\n")[line_number+2]
+                log.debug(f"Corresponding text: {s}")
+                return s
         except:
             log.warning(f"Could not open corresponding ASCII text file {self.onlineASCIIFull}", exc_info=True)
+
+    def getText(self):
+        return self.text
 
     def getImage(self):
         try:
@@ -138,7 +222,7 @@ class StrokeSet(object):
             for stroke in self.strokes:  # Build parallel point and code lists from all strokes in the set
                 log.debug(f"Raw stroke: {stroke}")
 
-                points = [(x[0], x[1], x[2]) for x in stroke.getPoints()]  # Extract the points from stroke
+                points = [(x[0], x[1], x[2]) for x in stroke.asNumpyArray()]  # Extract the points from stroke
                 pointCodes = [Path.MOVETO] + list(np.repeat(Path.LINETO, len(points) - 1))  # Add the right amount of codes for current stroke
 
                 [samplePoints.append(i) for i in points]  # Accumulate point tuples

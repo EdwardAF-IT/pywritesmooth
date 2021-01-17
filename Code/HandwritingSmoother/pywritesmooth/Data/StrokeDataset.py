@@ -1,4 +1,5 @@
 import sys, os, pickle, logging as log
+import numpy as np
 import pywritesmooth.Data.StrokeSet as strokeset
 import pywritesmooth.Utility.StrokeHelper as sh
 
@@ -10,7 +11,9 @@ class StrokeDataset(object):
 
     def init(self):
         log.debug("Init")
-        self.strokesets = []
+        self.strokesets = []        # L:ist of strokeset objects
+        self.strokeMatrix = []      # List of strokeset matrices
+        self.strokeAscii = []       # List of text lines
 
     def __init__(self):
         log.debug("Default constructor")
@@ -25,6 +28,13 @@ class StrokeDataset(object):
         else:
             self.loadRawData(inputFiles)
             self.save(savedPickle)
+
+        log.debug(f"Stroke Sets: Len = {len(self.getStrokesets())}")
+        log.debug(f"Stroke Matrix: Len = {len(self.getStrokeMatrix())}, Strokes = {self.getStrokeMatrix()}")
+        log.debug(f"Ascii Matrix: Len = {len(self.getAsciiList())}, Lines = {self.getAsciiList()}")
+
+    def __len__(self):
+        return(len(self.getStrokesets()))
         
     def loadRawData(self, inputFiles):
         """load
@@ -37,17 +47,44 @@ class StrokeDataset(object):
 
         # Load stroke information from XML files
         for file in inputFiles:
-            self.strokesets.append(strokeset.StrokeSet(file))
+            newStrokeset  = strokeset.StrokeSet(file)
+            self.strokesets.append(newStrokeset)
+            self.strokeMatrix.append(newStrokeset.asDeltaArray())
+            self.strokeAscii.append(newStrokeset.getText())
+
+        doneMsg = "Finished parsing dataset. Imported {} lines".format(len(self.getStrokesets()))
+        print (doneMsg)
+        log.info(doneMsg)
+
+    def getStrokesets(self):
+        return self.strokesets
+
+    def getStrokeMatrix(self):
+        return self.strokeMatrix
+
+    def getAsciiList(self):
+        return self.strokeAscii
 
     def save(self, pFile):
-        log.info(f"Saving data as Python pickle: {pFile}")
+        saveMsg = f"Saving data as Python pickle: {pFile}"
+        log.info(saveMsg)
+        print(saveMsg)
         file = open(pFile, 'wb')
         pickle.dump(self, file)
         file.close()
 
     def load(self, pFile):
-        log.info(f"Loading data from Python pickle: {pFile}")
-        print(f"Loading previously saved dataset from pickle {pFile}")
+        loadMsg = f"Loading previously saved dataset from pickle file {pFile}"
+        log.info(loadMsg)
+        print(loadMsg)
         file = open(pFile, 'rb')
-        self = pickle.load(file)
+        incoming = pickle.load(file)
         file.close()
+
+        self.strokesets = incoming.strokesets
+        self.strokeMatrix = incoming.strokeMatrix
+        self.strokeAscii = incoming.strokeAscii
+
+        doneMsg = "Loaded {} lines for processing".format(len(self.getStrokesets()))
+        print (doneMsg)
+        log.info(doneMsg)

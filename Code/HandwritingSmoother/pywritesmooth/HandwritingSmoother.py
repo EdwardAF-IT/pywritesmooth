@@ -1,7 +1,7 @@
 import sys, os, click, glob, logging as log
 
 import pywritesmooth.Smooth.Smoother as sm
-#import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
+import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
 import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke
 import pywritesmooth.Data.StrokeSet as strokeset
@@ -31,7 +31,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
     EXIT_FAILURE = 1
 
     try:
-        log.basicConfig(filename='pywritesmooth.log', level=log.INFO, 
+        log.basicConfig(filename='pywritesmooth.log', level=log.DEBUG, 
                         format=r'%(asctime)s %(levelname)s (%(filename)s/%(funcName)s:%(lineno)d): %(message)s', 
                         datefmt='%d-%b-%y %H:%M:%S')
         log.debug("Starting app")
@@ -69,15 +69,16 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 hwInput = glob.glob(train)
 
                 writingSample = sds.StrokeDataset(hwInput, hwDataSave)
+                return EXIT_SUCCESS  # Temp
                 models = []
 
-                #for modelName in train_models:
-                #    if modelName == 'lstm':
-                #        models.append(lstm.LSTMTrainer())
-                #    if modelName == 'gan':
-                #        models.append(gan.GANTrainer())
+                for modelName in train_models:
+                    if modelName == 'lstm':
+                        models.append(lstm.LSTMTrainer())
+                    if modelName == 'gan':
+                        models.append(gan.GANTrainer())
 
-                #models = BuildModels(writingSample, models)
+                models = BuildModels(writingSample, models)
                 #TestModels(models)
 
         if not smooth is None:

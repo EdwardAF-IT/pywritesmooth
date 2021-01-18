@@ -133,3 +133,5 @@ dmypy.json
 .mkv
 .mp3
 .mov
+.log
+.pkl

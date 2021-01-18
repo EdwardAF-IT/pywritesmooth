@@ -1,12 +1,13 @@
+# Basics
 import sys, os, click, glob, logging as log
 
+# Project
 import pywritesmooth.Smooth.Smoother as sm
 import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
 import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke
 import pywritesmooth.Data.StrokeSet as strokeset
 import pywritesmooth.Data.StrokeDataset as sds
-#import pywritesmooth.Data.StrokeDataModule as sdm
 
 @click.command()
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
@@ -69,12 +70,11 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 hwInput = glob.glob(train)
 
                 writingSample = sds.StrokeDataset(hwInput, hwDataSave)
-                return EXIT_SUCCESS  # Temp
                 models = []
 
                 for modelName in train_models:
                     if modelName == 'lstm':
-                        models.append(lstm.LSTMTrainer())
+                        models.append(lstm.LSTMTrainer(saved_model))
                     if modelName == 'gan':
                         models.append(gan.GANTrainer())
 
@@ -112,7 +112,7 @@ def BuildModels(hw, modelsToTrain):
     """
 
     for model in modelsToTrain:
-        model.train(hw, savedModel)
+        model.train(hw)
 
     return modelsToTrain
 

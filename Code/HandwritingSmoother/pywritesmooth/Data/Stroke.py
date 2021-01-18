@@ -1,12 +1,28 @@
-from bs4 import BeautifulSoup as bs
-import collections as col, logging as log
-import numpy as np
+# Basics
+import collections as col, numpy as np, logging as log
+
+# Project
 import pywritesmooth.Utility.StrokeHelper as sh
+
+# Parsing
+from bs4 import BeautifulSoup as bs
 
 class Stroke(object):
     """Stroke
 
-       This class manages input data, specifically in the form of "online" format, where the data is a time-series of {x,y} coordinates.  A stroke is conceptually part of a StrokeSet, which is a group of strokes that, together, forms a single handwriting sample.
+       This class manages input data, specifically in the form of "online" format, where the 
+       data is a time-series of {x,y} coordinates.  A stroke is conceptually part of a 
+       StrokeSet, which is a group of strokes that, together, forms a single handwriting 
+       sample.
+
+       In order to facilitate later model training, offsets are also calculated and stored.
+       The offsets are computed when the dataset is being loaded in.  They come from the input
+       file a level above this one (the stroke), at the strokeset level.  Therefore, the strokeset
+       to which this stroke belongs is responsible for reading the offsets, computing them, and
+       passing them into this object as needed.
+
+       The normalized points are saved along with the original, non-normalized, points to maintain
+       flexibility for users of this class.
     """
 
     def init(self):
@@ -29,7 +45,8 @@ class Stroke(object):
     def load(self, strokeXML, x_offset = 0, y_offset = 0):
         """load
 
-           strokeXML is an XML of a stroke, which is a collection of points.
+           strokeXML is an XML of a stroke, which is a collection of points.  In addition, if
+           offsets are passed in, they will be calculated and saved with the stroke, too.
         """
 
         # Load points from stroke XML

@@ -14,7 +14,7 @@
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u*.xml" --train-models lstm -m ".\hwSynthesis.model" -p ".\hwData.pkl"</CommandLineArguments>
+    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\*\*\*.xml" --train-models lstm -m ".\hwSynthesis.model" -p ".\hwData.pkl"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -26,7 +26,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="pywritesmooth\Data\DataLoader.py">
+    <Compile Include="pywritesmooth\Data\LSTMDataInterface.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\Data\StrokeDataModule.py" />
@@ -56,9 +56,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\TrainSmoother\__init__.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="pywritesmooth\Utility\Letter.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\Utility\__init__.py">

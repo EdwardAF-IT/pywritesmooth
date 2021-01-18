@@ -1,17 +1,31 @@
+# Basics
 import sys, os, glob, logging as log, numpy as np
-from bs4 import BeautifulSoup as bs
+
+# Project
 import pywritesmooth.Data.Stroke as stroke
-from PIL import Image
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
 import pywritesmooth.Utility.StrokeHelper as sh
+
+# Parsing
+from bs4 import BeautifulSoup as bs
+
+# Plotting
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import matplotlib.image as mpimg
+from matplotlib.path import Path
+from PIL import Image
 
 class StrokeSet(object):
     """StrokeSet
 
-       This class manages input data, specifically in the form of "online" format, where the data is a time-series of {x,y} coordinates.  The stroke set is a grouping of individual strokes.  A stroke is where the user picks up the writing tool and then puts it back down for the next part of the script.
+       This class manages input data, specifically in the form of "online" format, where the 
+       data is a time-series of {x,y} coordinates.  The stroke set is a grouping of individual 
+       strokes.  A stroke is where the user picks up the writing tool and then puts it back down 
+       for the next part of the script.
+
+       In addition to a collection of strokesets that comprise a single handwriting line sample,
+       the corresponding raster image's location from the original dataset along with the line
+       of ascii text is stored.  The individual strokes are stored as a list.
     """
 
     def init(self):
@@ -43,7 +57,9 @@ class StrokeSet(object):
     def assemblePaths(self, inputFileName):
         """assemblePaths
 
-           Break apart the path information and reform it into paths for related data like the text and image files.  This is possible because the IAM online dataset follows a very clean and predictable naming scheme.
+           Break apart the path information and reform it into paths for related data like the 
+           text and image files.  This is possible because the IAM online dataset follows a very 
+           clean and predictable naming scheme.
         """
 
         log.debug(f"Assembling pathnames for {inputFileName}")
@@ -91,6 +107,7 @@ class StrokeSet(object):
         """load
 
            inputFileName is a single file to load.  Each file will be loaded as a list of strokes.
+           In addition, offsets are calculated and saved for processing if they are needed.
         """
 
         self.assemblePaths(inputFileName)
@@ -171,7 +188,7 @@ class StrokeSet(object):
                 prev_x = int(points[k][0])
                 prev_y = int(points[k][1])
                 stroke_data[counter, 2] = 0
-                if (k == (len(self.strokes[j])-1)): # end of stroke
+                if (k == (len(self.strokes[j])-1)): # End of stroke
                     stroke_data[counter, 2] = 1
                 counter += 1
 
@@ -179,15 +196,29 @@ class StrokeSet(object):
         return stroke_data
 
     def arrayToString(self, arr):
+        """arrayToString
+
+           Convert a numpy array into a string.  Useful to print an entire array instead of the
+           truncation that numpy will give you.
+        """
+
         s = ""
 
         for i in range(len(arr)):
-            #log.debug(f"{np.array_str(arr[i])}")
             s += np.array_str(arr[i]) + '\n'
 
         return(s)
 
     def loadText(self, line_number):
+        """loadText
+
+           Read the ascii text that corresponds to the handwriting stroke information.  The
+           input dataset is well-structured, so this is easy to do with the right filename
+           and the line number of interest.  The ascii files have 2 sections.  The first is an OCR
+           attempt at interpreting the handwriting, and the second, starting with CSR, is the
+           correct text.  We read in only the correct text.
+        """
+
         try:
             with open(self.onlineASCIIFull, "r") as file:
                 s = file.read()
@@ -202,9 +233,20 @@ class StrokeSet(object):
             log.warning(f"Could not open corresponding ASCII text file {self.onlineASCIIFull}", exc_info=True)
 
     def getText(self):
+        """getText
+
+           Return the ascii text that represents these strokes.
+        """
+
         return self.text
 
     def getImage(self):
+        """getImage
+
+           Show the raster image that corresponds to the writing sample.  This image is stored in the
+           input dataset following a similar naming scheme to the ascii text.
+        """
+
         try:
             log.info(f"Corresponding image file: {self.onlineImageFull}")
             #im.show()
@@ -214,6 +256,19 @@ class StrokeSet(object):
             log.warning(f"Could not open corresponding image file {self.onlineImageFull}", exc_info=True)
 
     def showStrokeset(self):
+        """showStrokeset
+
+           Display the handwriting sample by plotting the online data points.  This is done by 
+           extracting the x,y points from a numpy version of the data, then applying a LINETO
+           action from matplotlib to connect the dots.  A MOVETO action is used when the virtual
+           pen is lifted between strokes, which results in the white space expected.
+
+           In addition, the points are normalized in order to fit neatly on the drawing surface,
+           and the aspect ratio is honored so that the sample appears exactly as it was written.
+           Finally, all the usual chrome of a plot, like labels, axes, and ticks are removed
+           since they make no sense in this context.
+        """
+
         try:
             log.debug(f"Raw strokes: {self.strokes}")
 

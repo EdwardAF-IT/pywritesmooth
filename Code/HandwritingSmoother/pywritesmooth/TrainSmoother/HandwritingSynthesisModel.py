@@ -1,13 +1,64 @@
+# Basics
+import numpy as np
+
 # Neural Networks
 import torch
 import torch.nn as nn
+use_cuda = False
+use_cuda = torch.cuda.is_available()
+
+# Display
+from ipywidgets import FloatProgress
+from IPython.display import SVG, display
 
 class HandwritingSynthesisModel(nn.Module):
-    """
-    Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
+    """HandwritingSynthesisModel
+
+        The network consists of LSTM cells stacked on top of each other and followed by 
+        a Gaussian mixture layer with an attention mechanism in between. This network 
+        includes skip connections like the paper. It is almost the same network as the 
+        one in my other notebook (Handwriting prediction - Model 2) but with the attention 
+        mechanism.
+
+        The attention mechanism is implemented between LSTM1 and LSTM2. LSTM1 takes as inputs 
+        the window vectors of the previous time step as well as current stroke coordinates. A 
+        dense layer is used taking the output of LSTM1 to compute the parameters of the window 
+        vectors. The current window vector is passed on to LSTM2 and LSTM3 as well as the stroke 
+        coordinates via skip connections. LSTM2 and LSTM3 of course take the hidden vectors of 
+        the LSTM1 and LSTM2 respectively. This is summarized by equations 52 and 53.
+
+        The Gaussian mixtures are created using a dense layer. It takes the output of the last 
+        LSTM layer. Say the hidden size is 256 and you want 10 mixtures, this allows to scale 
+        your vector to the desired size. This gives ŷ of equation 17 of the paper.
+
+        ŷ is then broken down into the different parameters of the mixture.
+            * ê is the probability of the end of a stroke given by a Bernoulli distribution
+            * w (or Π) is the weight of each Normal distribution
+            * 𝜇,𝜎,𝜌  are the mean, standard deviation and correlation factor of each bivariate 
+             Normal Distribution. The constructor just lays out the blocks but does not create 
+             relations between them. That's the job of the forward function.
+
+        The network is summarized by figure 12 (it does show the third hidden layer which does 
+        pretty much the same thing as the second).
+
+        Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
 
     def __init__(self, hidden_size = 256, n_gaussians = 20, Kmixtures = 10, dropout = 0.2, alphabet_size = 64):
+        """__init___
+
+           This is the constructor.  It takes the different parameters to create the different 
+           blocks of the model.
+
+               * hidden_size is the size of the output of each LSTM cell
+               * n_gaussians is the number of mixtures
+               * Kmixtures is the number of Gaussian functions for the window vectors
+               * dropout is the dropout probability. It gives the probability to skip a cell during 
+                 forward propagation. It's not implemented yet.
+               * alphabet_size is the number of characters in our dictionary
+
+        """
+
         super(HandwritingSynthesisModel, self).__init__()
         
         self.Kmixtures = Kmixtures
@@ -18,13 +69,13 @@ class HandwritingSynthesisModel(nn.Module):
         self.hidden_size2 = hidden_size
         self.hidden_size3 = hidden_size
         
-        # input_size1 includes x, y, eos and len(w_t_1) given by alphabet_size (see eq 52)
+        # Input_size1 includes x, y, eos and len(w_t_1) given by alphabet_size (see eq 52)
         self.input_size1 = 3 + alphabet_size
         
-        # input_size2 includes x, y, eos, len(w_t) given by alphabet_size (see eq 47) and hidden_size1
+        # Input_size2 includes x, y, eos, len(w_t) given by alphabet_size (see eq 47) and hidden_size1
         self.input_size2 = 3 + alphabet_size + self.hidden_size1
         
-        # input_size3 includes x, y, eos, len(w_t) given by alphabet_size (see eq 47) and hidden_size2
+        # Input_size3 includes x, y, eos, len(w_t) given by alphabet_size (see eq 47) and hidden_size2
         self.input_size3 = 3 + alphabet_size + self.hidden_size2
         
         # See eq 52-53 to understand the input_sizes
@@ -52,10 +103,36 @@ class HandwritingSynthesisModel(nn.Module):
         
         
     def forward(self, x, c, generate = False):
-        # sequence length
+        """forward
+
+           This is the forward propagation. It takes x and c as inputs.
+
+            x is a batch of stroke coordinates of sequences. Its dimensions are 
+            [sequence_size, batch_size, 3]. The 3 corresponds to x and y offset of a stroke 
+            and eos (= 1 when reaching an end of stroke (when the pen is raised)).
+
+            c, a batch of one-hot encoded sentences corresponding to the stroke sequence is 
+            of dimensions [n_batch, U_items, len(alphabet)]. It is estimated that a letter 
+            corresponds to 25 points. U_items is the number of characters in the sequence. 
+            For example, if the sequence is 400 points long, U_items = 400 / 25 = 16 charcaters. 
+            len(alphabet) is the number of characters in our alphabet.
+
+            Note that the forward function is also used to generate random sequences.
+
+            The first step is to compute LSTM1. This is straightfoward in PyTorch. Since the 
+            LSTM cells use Pytorch, we need a for loop over the whole stroke sequence.
+
+            After LSTM1, the code computes the attention mechanism given by equations 46-51 
+            of the paper.
+
+            After that, the networks computes LSTM2 and LSTM3. Then it's just a matter of 
+            computing 18 - 22 of the paper using a dense layer.
+        """
+
+        # Sequence length
         sequence_length = x.shape[0]
         
-        # number of batches
+        # Number of batches
         n_batch = x.shape[1]
         
         # Soft window vector w at t-1
@@ -66,7 +143,7 @@ class HandwritingSynthesisModel(nn.Module):
         c1_t = torch.zeros(n_batch, self.hidden_size1) # torch.Size([n_batch, hidden_size1])
         
         # Kappa at t-1
-        kappa_t_1 = torch.zeros(n_batch, Kmixtures) # torch.Size([n_batch, Kmixtures])
+        kappa_t_1 = torch.zeros(n_batch, self.Kmixtures) # torch.Size([n_batch, Kmixtures])
         
         # Hidden and cell state for LSTM2
         h2_t = torch.zeros(n_batch, self.hidden_size2) # torch.Size([n_batch, hidden_size2])
@@ -116,12 +193,12 @@ class HandwritingSynthesisModel(nn.Module):
             # ===== Computing soft window =====
             window = self.window_layer(h1_t)
             
-            # splits exp(window) into 3 tensors of torch.Size([n_batch, Kmixtures])
+            # Splits exp(window) into 3 tensors of torch.Size([n_batch, Kmixtures])
             # Eqs 48-51 of the paper
             alpha_t, beta_t, kappa_t = torch.chunk( torch.exp(window), 3, dim=1) 
             kappa_t = 0.1 * kappa_t + kappa_t_1
             
-            # updates kappa_t_1 for next iteration
+            # Updates kappa_t_1 for next iteration
             kappa_t_1 = kappa_t
             
             u = torch.arange(0,c.shape[1], out=kappa_t.new()).view(-1,1,1) # torch.Size([U_items, 1, 1])
@@ -162,32 +239,32 @@ class HandwritingSynthesisModel(nn.Module):
             
         # ===== Computing MDN =====
         es = self.z_e(out)
-        # print("es shape ", es.shape) # -> torch.Size([sequence_length, batch, 1])
+        log.debug("es shape ", es.shape) # -> torch.Size([sequence_length, batch, 1])
         es = 1 / (1 + torch.exp(es))
-        # print("es shape", es.shape) # -> torch.Size([sequence_length, batch, 1])
+        log.debug("es shape", es.shape) # -> torch.Size([sequence_length, batch, 1])
 
         pis = self.z_pi(out) * (1 + self.bias)
-        # print("pis shape ", pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug("pis shape ", pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
         pis = torch.softmax(pis, 2)
-        # print(pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
 
         mu1s = self.z_mu1(out) 
         mu2s = self.z_mu2(out)
-        # print("mu shape :  ", mu1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug("mu shape :  ", mu1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
 
         sigma1s = self.z_sigma1(out)
         sigma2s = self.z_sigma2(out)
-        # print("sigmas shape ", sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug("sigmas shape ", sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
         sigma1s = torch.exp(sigma1s - self.bias)
         sigma2s = torch.exp(sigma2s - self.bias)
-        # print(sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
 
         rhos = self.z_rho(out)
         rhos = torch.tanh(rhos)
-        # print("rhos shape ", rhos.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug("rhos shape ", rhos.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
 
         es = es.squeeze(2) 
-        # print("es shape ", es.shape) # -> torch.Size([sequence_length, batch])
+        log.debug("es shape ", es.shape) # -> torch.Size([sequence_length, batch])
 
         # Hidden and cell states
         if generate:
@@ -202,23 +279,43 @@ class HandwritingSynthesisModel(nn.Module):
         
         return es, pis, mu1s, mu2s, sigma1s, sigma2s, rhos
     
-    
-    
-    
     def generate_sample(self, mu1, mu2, sigma1, sigma2, rho):
+        """generate_sample
+
+           Returns random coordinates based on a bivariate normal distribution given by the 
+           function parameters.
+        """
+
         mean = [mu1, mu2]
         cov = [[sigma1 ** 2, rho * sigma1 * sigma2], [rho * sigma1 * sigma2, sigma2 ** 2]]
         
         x = np.float32(np.random.multivariate_normal(mean, cov, 1))
         return torch.from_numpy(x)
         
-        
     def generate_sequence(self, x0, c0, bias):
+        """generate_sequence
+
+           The goal of this function is to return a sequence based on either a single point or 
+           beginning of sequence x0. In pseudo-code:
+
+               * Calculte the mixture parameters of sequence x0 given one-hot encoded string c0
+               * Pick a random mixture based on the weights (pi_idx)
+               * Take a random point from the chosen bivariate normal distribution
+               * Add it at the end of the sequence (concatenate it)
+               * Repeat
+
+           This clearly is bad practise as it has to rerun the forward prop on the entire 
+           sequence each time. And the sequence gets longer and longer, which takes more 
+           time to compute at each new point generated. However, this holds in just a few 
+           lines and keeps the forward function cleaner.
+        """
+
         sequence = x0
         sample = x0
         sequence_length = c0.shape[1] * 25
         
         print("Generating sequence ...")
+        log.info("Generating sequence ...")
         self.bias = bias
         f = FloatProgress(min=0, max=sequence_length)
         display(f)
@@ -229,7 +326,7 @@ class HandwritingSynthesisModel(nn.Module):
             # Selecting a mixture 
             pi_idx = np.random.choice(range(self.n_gaussians), p=pis[-1, 0, :].detach().cpu().numpy())
             
-            # taking last parameters from sequence corresponding to chosen gaussian
+            # Taking last parameters from sequence corresponding to chosen gaussian
             mu1 = mu1s[-1, :, pi_idx].item()
             mu2 = mu2s[-1, :, pi_idx].item()
             sigma1 = sigma1s[-1, :, pi_idx].item()

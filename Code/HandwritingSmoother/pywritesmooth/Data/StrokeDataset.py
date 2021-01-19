@@ -91,6 +91,7 @@ class StrokeDataset(object):
         saveMsg = f"Saving data as Python pickle: {pFile}"
         log.info(saveMsg)
         print(saveMsg)
+        os.makedirs(os.path.dirname(pFile), exist_ok=True)
         file = open(pFile, 'wb')
         pickle.dump(self, file)
         file.close()

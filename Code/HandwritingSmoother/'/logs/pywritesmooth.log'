@@ -1,0 +1,7 @@
+18-Jan-21 19:28:32 INFO (HandwritingSmoother.py/main:86): Training model data: C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\*\*\*.xml
+18-Jan-21 19:28:32 INFO (HandwritingSmoother.py/main:87): Training model args: ('lstm',)
+18-Jan-21 19:28:32 INFO (StrokeSet.py/load:119): Reading C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml
+18-Jan-21 19:28:33 INFO (StrokeSet.py/load:119): Reading C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-02.xml
+18-Jan-21 19:28:34 INFO (StrokeSet.py/load:119): Reading C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-03.xml
+18-Jan-21 19:28:34 INFO (StrokeSet.py/load:119): Reading C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-04.xml
+18-Jan-21 19:28:35 INFO (StrokeSet.py/load:119): Reading C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-05.xml

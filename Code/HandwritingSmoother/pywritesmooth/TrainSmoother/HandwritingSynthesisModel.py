@@ -1,5 +1,5 @@
 # Basics
-import numpy as np
+import numpy as np, logging as log
 
 # Neural Networks
 import torch
@@ -239,32 +239,32 @@ class HandwritingSynthesisModel(nn.Module):
             
         # ===== Computing MDN =====
         es = self.z_e(out)
-        log.debug("es shape ", es.shape) # -> torch.Size([sequence_length, batch, 1])
+        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
         es = 1 / (1 + torch.exp(es))
-        log.debug("es shape", es.shape) # -> torch.Size([sequence_length, batch, 1])
+        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
 
         pis = self.z_pi(out) * (1 + self.bias)
-        log.debug("pis shape ", pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
         pis = torch.softmax(pis, 2)
-        log.debug(pis.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         mu1s = self.z_mu1(out) 
         mu2s = self.z_mu2(out)
-        log.debug("mu shape :  ", mu1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"mu shape :  {mu1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         sigma1s = self.z_sigma1(out)
         sigma2s = self.z_sigma2(out)
-        log.debug("sigmas shape ", sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
         sigma1s = torch.exp(sigma1s - self.bias)
         sigma2s = torch.exp(sigma2s - self.bias)
-        log.debug(sigma1s.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         rhos = self.z_rho(out)
         rhos = torch.tanh(rhos)
-        log.debug("rhos shape ", rhos.shape) # -> torch.Size([sequence_length, batch, n_gaussians])
+        log.debug(f"rhos shape {rhos.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         es = es.squeeze(2) 
-        log.debug("es shape ", es.shape) # -> torch.Size([sequence_length, batch])
+        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch])
 
         # Hidden and cell states
         if generate:

@@ -55,7 +55,7 @@ class LSTMDataInterface():
                 self.ascii_data.append(self.raw_ascii_data[i])
 
         # Minus 1, since we want the ydata to be a shifted version of x data
-        self.num_batches = np.max(1, int(len(self.stroke_data) / self.batch_size))  # Always have at least one to avoid div by zero
+        self.num_batches = int(len(self.stroke_data) / self.batch_size)
         log.info(f"Stroke Len = {len(self.stroke_data)}, Batch Size = {self.batch_size}, Num Batches = {self.num_batches}")
         print ("Loaded dataset:")
         print ("   -> {} individual data points".format(len(self.stroke_data)))
@@ -85,7 +85,6 @@ class LSTMDataInterface():
 
            Transforms a string sequence into a one-hot matrix. Dimensions of the output one-hot 
            matrix are (string length, len(alphabet)).
-
         """
 
         # Index position 0 means "unknown"

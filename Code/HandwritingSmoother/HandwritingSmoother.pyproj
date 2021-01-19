@@ -14,7 +14,7 @@
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\*\*\*.xml" --train-models lstm -m ".\hwSynthesis.model" -p ".\hwData.pkl"</CommandLineArguments>
+    <CommandLineArguments>--train "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\*\*\*.xml" --train-models lstm -m ".\saves\hwSynthesis.model" -p ".\saves\hwData.pkl" -l ".\logs\pywritesmooth.log" -ll "debug"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

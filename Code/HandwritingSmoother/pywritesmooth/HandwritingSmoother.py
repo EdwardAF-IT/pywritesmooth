@@ -16,7 +16,9 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
 @click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
 @click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
-def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None):
+@click.option('-l', '--log-file', type=click.STRING, help = 'Filename of the log file')
+@click.option('-ll', '--log-level', type=click.STRING, help = 'Logging level: critical, error, warning, info, or debug')
+def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, log_file = None, log_level = None):
     """The main routine.
     
     
@@ -32,7 +34,23 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
     EXIT_FAILURE = 1
 
     try:
-        log.basicConfig(filename='pywritesmooth.log', level=log.DEBUG, 
+        # Default log file
+        hw_log_file = ".\pywritesmooth.log"
+        if not log_file is None:
+            hw_log_file = log_file
+        os.makedirs(os.path.dirname(hw_log_file), exist_ok=True)
+
+        # Logging level
+        logging_level = log.INFO
+        if not log_level is None:
+            ll = log_level.lower()
+            logging_level = log.CRITICAL if ll == 'critical' else \
+                            log.WARNING if ll == 'warning' else \
+                            log.ERROR if ll == 'error' else \
+                            log.DEBUG if ll == 'debug' else \
+                            log.INFO
+
+        log.basicConfig(filename=hw_log_file, level=logging_level, 
                         format=r'%(asctime)s %(levelname)s (%(filename)s/%(funcName)s:%(lineno)d): %(message)s', 
                         datefmt='%d-%b-%y %H:%M:%S')
         log.debug("Starting app")

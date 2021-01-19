@@ -189,11 +189,11 @@ class LSTMTrainer(TrainerInterface):
     def plot_heatmaps(self, Phis, Ws):
         """plot_heatmaps
 
-           plots Phis and soft-window heatmaps. It corresponds to the values of equations 46 and 47 of the paper.
-        
+           plots Phis and soft-window heatmaps. It corresponds to the values of equations 
+           46 and 47 of the paper. 
         """
 
-        plt.figure(figsize=(16,4))
+        fig = plt.figure(figsize=(16,4))
         plt.subplot(121)
         plt.title('Phis', fontsize=20)
         plt.xlabel("Time stself.eps", fontsize=15)
@@ -204,9 +204,7 @@ class LSTMTrainer(TrainerInterface):
         plt.title('Soft attention window', fontsize=20)
         plt.xlabel("Time stself.eps", fontsize=15)
         plt.ylabel("One-hot vector", fontsize=15)
-        plt.imshow(Ws, interpolation='nearest', aspect='auto', cmap=cm.jet)
-
-        display(plt.gcf())
+        plt.imsave('test.png', Ws, cmap=cm.jet)
 
     def get_n_params(self, model):
         """get_n_params
@@ -244,18 +242,18 @@ class LSTMTrainer(TrainerInterface):
     
         # Takes x1 and repeats it over the number of gaussian mixtures
         x1 = y[:,:, 0].repeat(n_mixtures, 1, 1).permute(1, 2, 0) 
-        log.debug("x1 shape ", x1.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        log.debug(f"x1 shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # First term of Z (eq 25)
         x1norm = ((x1 - mu1s) ** 2) / (sigma1s ** 2 )
-        log.debug("x1norm shape ", x1.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        log.debug(f"x1norm shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         x2 = y[:,:, 1].repeat(n_mixtures, 1, 1).permute(1, 2, 0)  
-        log.debug("x2 shape ", x2.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        log.debug(f"x2 shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # Second term of Z (eq 25)
         x2norm = ((x2 - mu2s) ** 2) / (sigma2s ** 2 )
-        log.debug("x2norm shape ", x2.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        log.debug(f"x2norm shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # Third term of Z (eq 25)
         coxnorm = 2 * rhos * (x1 - mu1s) * (x2 - mu2s) / (sigma1s * sigma2s) 
@@ -265,13 +263,13 @@ class LSTMTrainer(TrainerInterface):
     
         # Gaussian bivariate (eq 24)
         N = torch.exp(-Z / (2 * (1 - rhos ** 2))) / (2 * np.pi * sigma1s * sigma2s * (1 - rhos ** 2) ** 0.5) 
-        log.debug("N shape ", N.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians]) 
+        log.debug(f"N shape {N.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians]) 
     
         # Pr is the result of eq 23 without the eos part
         Pr = pis * N 
-        log.debug("Pr shape ", Pr.shape) # -> torch.Size([self.sequence_length, batch, self.n_gaussians])   
+        log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])   
         Pr = torch.sum(Pr, dim=2) 
-        log.debug("Pr shape ", Pr.shape) # -> torch.Size([self.sequence_length, batch])   
+        log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch])   
     
         if use_cuda:
             Pr = Pr.cuda()
@@ -301,9 +299,9 @@ class LSTMTrainer(TrainerInterface):
     
         loss2 = - torch.log(bernouilli + self.eps)
         loss = loss1 + loss2 
-        log.debug("loss shape", loss.shape) # -> torch.Size([self.sequence_length, batch])  
+        log.debug(f"loss shape {loss.shape}") # -> torch.Size([self.sequence_length, batch])  
         loss = torch.sum(loss, 0) 
-        log.debug("loss shape", loss.shape) # -> torch.Size([batch]) 
+        log.debug(f"loss shape {loss.shape}") # -> torch.Size([batch]) 
     
         return torch.mean(loss);
 
@@ -390,7 +388,7 @@ class LSTMTrainer(TrainerInterface):
                 # Useful infos over training
                 if batch % 10 == 0:
                     print("Epoch : ", epoch, " - step ", batch, "/", data_loader.num_batches, " - loss ", loss.item(), " in ", time.time() - start)
-                    log.info("Epoch : ", epoch, " - step ", batch, "/", data_loader.num_batches, " - loss ", loss.item(), " in ", time.time() - start)
+                    log.info(f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item()} in {time.time() - start}")
                     start = time.time()
                 
                     # Plot heatmaps every 100 batches
@@ -422,6 +420,7 @@ class LSTMTrainer(TrainerInterface):
         
             # Save model after each epoch
             log.info(f"Saving model after epoch {epoch} in {modelSaveLoc}")
+            os.makedirs(os.path.dirname(modelSaveLoc), exist_ok=True)
             torch.save(model.state_dict(), modelSaveLoc)
         
         # Plot loss 

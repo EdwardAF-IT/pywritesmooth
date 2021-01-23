@@ -129,9 +129,11 @@ dmypy.json
 .pyre/
 
 # Large files
-.mp4
-.mkv
-.mp3
-.mov
-.log
-.pkl
+*.mp4
+*.mkv
+*.mp3
+*.mov
+*.log
+*.pkl
+*.png
+*.jpg

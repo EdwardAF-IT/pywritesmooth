@@ -43,18 +43,19 @@ class LSTMTrainer(TrainerInterface):
        equations from the paper.
 
        Finally, there are methods to optionally create plots of the sample strokes and
-       heatmaps from the paper.
+       heatmaps from the original paper upon which this model implementation is based.
+       You can read the original paper here:  https://arxiv.org/pdf/1308.0850v5.pdf
 
        Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
     def init(self):
         # Preferences
         self.display_images = False
-        self.save_plot_base = r".\plots\phi"
+        self.save_plot_base = os.path-join(".", "plots", "phi")
         self.plot_num = 1
-        self.hw_plot_base = r".\plots\hw"
+        self.hw_plot_base = os.path.join(".", "samples", "hw")
         self.hw_num = 1
-        self.gen_stroke_base = r".\strokes\gen_stroke"
+        self.gen_stroke_base = os.path.join(".", "strokes", "gen_stroke")
         self.gen_stroke_num = 1
 
         # Batch params
@@ -73,18 +74,24 @@ class LSTMTrainer(TrainerInterface):
         self.gradient_threshold = 10
         self.dropout = 0.2
 
-    def __init__(self, saved_model = None, display_images = False, save_plot_base = r".\plots\phi",
-                 save_samples = False, save_sample_base = r".\samples\hw", 
-                 save_generated_strokes = False, save_generated_stroke_base = r".\strokes\gen_stroke"):
+    def __init__(self, saved_model = None, display_images = False, save_plot_base = None,
+                 save_samples = False, save_sample_base = None, 
+                 save_generated_strokes = False, save_generated_stroke_base = None):
         log.debug("In ltsm con")
         self.init()
+
         self.display_images = display_images
-        self.save_plot_base = save_plot_base
+        if not save_plot_base is None:
+            self.save_plot_base = save_plot_base
+
         self.save_samples = save_samples
-        self.save_sample_base = save_sample_base
+        if not save_sample_base is None:
+            self.save_sample_base = save_sample_base
+
         self.saved_model = saved_model
         self.save_generated_strokes = save_generated_strokes
-        self.gen_stroke_base = save_generated_stroke_base
+        if not save_generated_stroke_base is None:
+            self.gen_stroke_base = save_generated_stroke_base
 
         cudaMsg = "Using CUDA" if use_cuda else "Not using CUDA"
         print(cudaMsg)
@@ -605,3 +612,61 @@ with       25)
         
 
         return model
+
+    def asHandwriting(self, text, bias = 10):
+        """asHandwriting
+
+           Generate handwriting of a text string.  Input a maximum of 80 characters.
+        """
+
+        assert len(text) <= 80   # Restrict the length for performance; don't want to gen from a book!
+        assert not self.trained_model is None  # Must have a trained model first to work!!
+
+        # c is the text to generate
+        c0 = np.float32(self.one_hot(text))
+        c0 = torch.from_numpy(c0) 
+        c0 = torch.unsqueeze(c0, 0)
+
+        # Starting sample (initially empty)
+        x0 = torch.Tensor([0,0,1]).view(1,1,3)
+
+        if use_cuda:
+            x0 = x0.cuda()
+
+        # Ask the trained model to generate the stroke sequence
+        sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
+        seqMsg = f"Sequence shape for text {text} = {sequence.shape}"
+        log.debug(seqMsg)
+        self.draw_strokes(sequence, factor=0.5)
+
+    def smoothHandwriting(self, sample, bias = 10):
+        """smoothHandwriting
+
+           Use the specified sample file to smooth it.  The sample must be in the IAM 
+           online data format (XML) at this time.  The result will be saved to an SVG 
+           file using the path specified in the *generated-save* flag.
+
+           Technically, the stroke data is read in from the sample file and converted
+           to the synthesis model format using the LSTMDataInterface.  Then, that array
+           is passed into the sequence generator to 'prime' it as described in section
+           5.5. of the paper.
+        """
+
+        assert not self.trained_model is None  # Must have a trained model first to work!!
+
+        # c is the text to generate  TODO: is c0 even necessary here?
+        c0 = np.float32(self.one_hot(text))
+        c0 = torch.from_numpy(c0) 
+        c0 = torch.unsqueeze(c0, 0)
+
+        # Starting sample TODO: assign x0 the sample stroke data
+        x0 = torch.Tensor([0,0,1]).view(1,1,3)
+
+        if use_cuda:
+            x0 = x0.cuda()
+
+        # Ask the trained model to generate the stroke sequence
+        sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
+        seqMsg = f"Sequence shape for text smoothing = {sequence.shape}"
+        log.debug(seqMsg)
+        self.draw_strokes(sequence, factor=0.5)

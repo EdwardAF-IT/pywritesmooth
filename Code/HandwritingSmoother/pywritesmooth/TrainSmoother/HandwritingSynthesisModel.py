@@ -392,7 +392,7 @@ class HandwritingSynthesisModel(nn.Module):
            The goal of this function is to return a sequence based on either a single point or 
            beginning of sequence x0. In pseudo-code:
 
-               * Calculte the mixture parameters of sequence x0 given one-hot encoded string c0
+               * Calculate the mixture parameters of sequence x0 given one-hot encoded string c0
                * Pick a random mixture based on the weights (pi_idx)
                * Take a random point from the chosen bivariate normal distribution
                * Add it at the end of the sequence (concatenate it)

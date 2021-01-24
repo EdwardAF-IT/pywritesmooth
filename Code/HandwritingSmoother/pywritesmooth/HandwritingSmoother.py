@@ -12,6 +12,7 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.command()
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
 @click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
+@click.option('-ss', '--smooth-sample', type=click.STRING, help="Filename of a writing sample in online (XML) format similar to the structure of the IAM dataset")
 @click.option('-t', '--train', type=click.STRING, help = 'Image file of printed digits or letters in upper or lower case to train the model(s)')
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
 @click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
@@ -23,18 +24,28 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-hws', '--hw-save', type=click.STRING, help = 'Location to save handwriting images; file name given will have numbers appended, i.e. images\hw will become images\hw1.png, hw2.png, etc.')
 @click.option('-hs', '--handwriting-save', is_flag=True, help = 'To save or not to save.. the samples (of which there could be a ton)')
 @click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
+@click.option('-w' '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
+@click.option('-tm' '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
 def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, 
          log_file = None, log_level = None, image_save = None, image_display = False, hw_save = None, 
-         handwriting_save  = False, generated_save = False):
+         handwriting_save  = False, generated_save = False, write = None, test_model = False, smooth_sample = None):
     """The main routine.
     
     
-    Some execution examples:
-    pywritesmooth --smooth <samplehw>  # Show to screen with default model
-    pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
-    pywritesmooth --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
-    pywritesmooth --pickled-data <filename> --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
-    pywritesmooth --pickled-data <filename> --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+        Some execution examples:
+        pywritesmooth --smooth <samplehw>  # Show to screen with default model
+        pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
+        pywritesmooth --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+        pywritesmooth --pickled-data <filename> --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
+        pywritesmooth --pickled-data <filename> --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
+
+        This application provides functionality related to handwriting.  Specifically, once it has been trained with a number of handwriting samples 
+        taken from the IAM online database, the model will be able to generate handwritten text on demand from ascii text.  In addition,
+        if a handwriting sample is supplied in the same IAM format, it will use the trained model to smooth the handwriting while still retaining
+        its unique stylistic characteristics.
+
+        At this time, only the LSTM model is implemented; however, the program is written to accomodate any number of smoothing models if they are
+        written in the future.
     """
     
     # Constants
@@ -43,7 +54,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
 
     try:
         # Default log file
-        hw_log_file = ".\pywritesmooth.log"
+        hw_log_file = os.path.join(".", "pywritesmooth.log")
         if not log_file is None:
             hw_log_file = log_file
         os.makedirs(os.path.dirname(hw_log_file), exist_ok=True)
@@ -76,25 +87,26 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
             print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
 
         # Default model file
-        hwModelSave = r".\hwSynthesis.model"
+        hwModelSave = os.path.join(".", "hwSynthesis.model")
         if not saved_model is None:
             hwModelSave = saved_model
 
         # Default pickled data file
-        hwDataSave = r".\hwData.pkl"
+        hwDataSave = os.path.join(".", "hwData.pkl")
         if not pickled_data is None:
             hwDataSave = pickled_data
 
         # Image save location
-        hwPlotImages = r".\plots\phi"
+        hwPlotImages = os.path.join(".", "plots", "phi")
         if not image_save is None:
             hwPlotImages = image_save
 
         # Sample save location
-        hwSaveSamples= r".\samples\hw"
+        hwSaveSamples= os.path.join(".", "samples", "hw")
         if not hw_save is None:
             hwSaveSamples = hw_save
 
+        # Train models of interest
         if not train is None:
             if train_models is None:
                 print("Please specify --train-models <model> switch when using --train")
@@ -117,17 +129,28 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                         models.append(gan.GANTrainer())
 
                 models = BuildModels(writingSample, models)
-                #TestModels(models)
 
+                if test_model:
+                    WriteText(models)
+
+        # Smooth handwriting sample provided by the user
         if not smooth is None:
             if smooth_model is None:
-                print("Please specify --smooth_model <gan | ltsm> switch when using --smooth")
-                log.critical("Smoothing switch missing or incorrect; exiting")
+                print(r"Please specify --smooth_model <gan | ltsm> switch when using --smooth")
+                log.critical(r"Smoothing switch missing or incorrect; exiting")
+                return EXIT_FAILURE
+            elif smooth_sample is None:
+                print(r"Please specify --smooth-sample <sample filename>")
+                log.critical(r"Smoothing sample missing or incorrect; exiting")
                 return EXIT_FAILURE
             else:
                 log.info(f"Smoothing models selected: {smooth_model}")
-                hw = Handwriting(smooth_model)
-                SmoothWriting(hw, switcher.get(smooth_model))
+                SmoothWriting(smooth_sample, models)
+
+        # Generate handwritten text supplied by user
+        if not write is None:
+            WriteText(models, write)
+
     except NotImplementedError as nie:
         print("Ran into some code that needs implementation: ", nie)
         log.critical(f"Ran into some code that needs implementation; exiting", exc_info=True)
@@ -141,12 +164,9 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
     return EXIT_SUCCESS
 
 def BuildModels(hw, modelsToTrain):
-    """
-    Foreach model type:
-	    Input --> Clean and transform input  --> Cleaned input
-	    Cleaned input --> Identify features --> Feature vector
-	    Cleaned input, feature vector --> Train the model --> Trained model
-	    Trained model --> Test the model --> Model metrics/error
+    """BuildModels
+
+       Have each model train itself or load a trained model.
     """
 
     for model in modelsToTrain:
@@ -154,29 +174,26 @@ def BuildModels(hw, modelsToTrain):
 
     return modelsToTrain
 
-def TestModels(trainedModels):
+def WriteText(trainedModels, genList = ['Sample text']):
+    """WriteText
+
+       Test the models available by having them generate handwriting from sample text.
+    """
+
     for model in trainedModels:
-        print(model.getError(model.test()))
+        for text in genList:
+            model.asHandwriting(text)
 
-def LoadModels(modelsToLoad):
-    for model in modelsToLoad:
-        model.load()
+def SmoothWriting(hwSample, models):
+    """SmoothWriting
 
-    return modelsToLoad
-
-def SmoothWriting(hwSample, modelToUse):
-    """
-    Input Writing to Smooth --> Clean and transform input  --> Cleaned input
-    Cleaned input, Trained model --> SmoothHandwriting --> Smoothed writing
-    Smoothed writing --> OutputWriting --> Image file
+       Smooth a handwriting sample.  The sample must be in the IAM online data format (XML)
+       at this time.  The result will be saved to an SVG file using the path specified in the
+       *generated-save* flag.
 
     """
-
-    sm = Smoother(hwSample, modelToUse)
-
-    sm.merge()
-    display(sm.merged())
-    sm.save()
+    for model in models:
+        model.smoothHandwriting(hwSample)   
 
 if __name__ == "__main__":
     sys.exit(main())

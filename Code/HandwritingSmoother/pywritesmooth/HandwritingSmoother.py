@@ -24,8 +24,8 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-hws', '--hw-save', type=click.STRING, help = 'Location to save handwriting images; file name given will have numbers appended, i.e. images\hw will become images\hw1.png, hw2.png, etc.')
 @click.option('-hs', '--handwriting-save', is_flag=True, help = 'To save or not to save.. the samples (of which there could be a ton)')
 @click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
-@click.option('-w' '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
-@click.option('-tm' '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
+@click.option('-w', '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
+@click.option('-tm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
 def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, 
          log_file = None, log_level = None, image_save = None, image_display = False, hw_save = None, 
          handwriting_save  = False, generated_save = False, write = None, test_model = False, smooth_sample = None):

@@ -43,3 +43,6 @@ class StrokeHelper(object):
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
+
+        if percents == 100.0:
+            print()

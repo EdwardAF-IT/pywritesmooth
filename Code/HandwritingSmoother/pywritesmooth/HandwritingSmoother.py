@@ -20,10 +20,16 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-ll', '--log-level', type=click.STRING, help = 'Logging level: critical, error, warning, info, or debug')
 @click.option('-is', '--image-save', type=click.STRING, help = 'Location to save plot images; file name given will have numbers appended, i.e. images\phi will become images\phi1.png, phi2.png, etc.')
 @click.option('-id', '--image-display', is_flag=True, help = 'To display or not to display.. the plots')
-def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, log_file = None, log_level = None, image_save = None, image_display = False):
+@click.option('-hws', '--hw-save', type=click.STRING, help = 'Location to save handwriting images; file name given will have numbers appended, i.e. images\hw will become images\hw1.png, hw2.png, etc.')
+@click.option('-hs', '--handwriting-save', is_flag=True, help = 'To save or not to save.. the samples (of which there could be a ton)')
+@click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
+def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, 
+         log_file = None, log_level = None, image_save = None, image_display = False, hw_save = None, 
+         handwriting_save  = False, generated_save = False):
     """The main routine.
     
     
+    Some execution examples:
     pywritesmooth --smooth <samplehw>  # Show to screen with default model
     pywritesmooth --smooth <samplehw> --smooth-model <model>  # Show to screen with specified model (GAN, LTSM, etc.)
     pywritesmooth --saved-model <filename> --train <traindata> --train-models <model> <model> <etc>  # Train with specified models
@@ -84,6 +90,11 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
         if not image_save is None:
             hwPlotImages = image_save
 
+        # Sample save location
+        hwSaveSamples= r".\samples\hw"
+        if not hw_save is None:
+            hwSaveSamples = hw_save
+
         if not train is None:
             if train_models is None:
                 print("Please specify --train-models <model> switch when using --train")
@@ -99,7 +110,9 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
 
                 for modelName in train_models:
                     if modelName == 'lstm':
-                        models.append(lstm.LSTMTrainer(hwModelSave, image_display, hwPlotImages))
+                        models.append(lstm.LSTMTrainer(hwModelSave, image_display, 
+                                                       hwPlotImages, handwriting_save, 
+                                                       hwSaveSamples, generated_save))
                     if modelName == 'gan':
                         models.append(gan.GANTrainer())
 

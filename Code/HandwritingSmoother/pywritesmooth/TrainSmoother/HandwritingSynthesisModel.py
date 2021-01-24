@@ -408,7 +408,7 @@ class HandwritingSynthesisModel(nn.Module):
         sample = x0
         sequence_length = c0.shape[1] * 25
         
-        log.info("Generating sequence ...")
+        log.info("Generating sample stroke sequence ...")
         self.bias = bias
 
         for i in range(sequence_length):

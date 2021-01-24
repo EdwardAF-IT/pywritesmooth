@@ -50,8 +50,12 @@ class LSTMTrainer(TrainerInterface):
     def init(self):
         # Preferences
         self.display_images = False
-        self.save_plot_base = f".\plots\phi"
+        self.save_plot_base = r".\plots\phi"
         self.plot_num = 1
+        self.hw_plot_base = r".\plots\hw"
+        self.hw_num = 1
+        self.gen_stroke_base = r".\strokes\gen_stroke"
+        self.gen_stroke_num = 1
 
         # Batch params
         self.n_batch = 20
@@ -69,12 +73,18 @@ class LSTMTrainer(TrainerInterface):
         self.gradient_threshold = 10
         self.dropout = 0.2
 
-    def __init__(self, saved_model = None, display_images = False, save_plot_base = f".\plots\phi"):
+    def __init__(self, saved_model = None, display_images = False, save_plot_base = r".\plots\phi",
+                 save_samples = False, save_sample_base = r".\samples\hw", 
+                 save_generated_strokes = False, save_generated_stroke_base = r".\strokes\gen_stroke"):
         log.debug("In ltsm con")
         self.init()
         self.display_images = display_images
         self.save_plot_base = save_plot_base
+        self.save_samples = save_samples
+        self.save_sample_base = save_sample_base
         self.saved_model = saved_model
+        self.save_generated_strokes = save_generated_strokes
+        self.gen_stroke_base = save_generated_stroke_base
 
         cudaMsg = "Using CUDA" if use_cuda else "Not using CUDA"
         print(cudaMsg)
@@ -127,17 +137,24 @@ class LSTMTrainer(TrainerInterface):
 
         return (min_x, max_x, min_y, max_y)
 
-    def draw_strokes(self, data, factor=10, svg_filename='sample.svg'):
+    def draw_strokes(self, data, factor=10):
         """draw_strokes
 
            Using the array format of the stroke data, draw the handwriting sample
            and optionally save it to a file for viewing.
 
         """
+        # File management
+        if self.save_generated_strokes:
+            gen_stroke_save_name = self.gen_stroke_base + r"_samples_" + str(self.gen_stroke_num) + r".svg"
+            os.makedirs(os.path.dirname(gen_stroke_save_name), exist_ok=True)
+        else:
+            return  # If we aren't saving the strokes, then don't bother with the rest
+
         min_x, max_x, min_y, max_y = self.get_bounds(data, factor)
         dims = (50 + max_x - min_x, 50 + max_y - min_y)
 
-        dwg = svgwrite.Drawing(svg_filename, size=dims)
+        dwg = svgwrite.Drawing(gen_stroke_save_name, size=dims)
         dwg.add(dwg.rect(insert=(0, 0), size=dims, fill='white'))
 
         lift_pen = 1
@@ -165,19 +182,61 @@ class LSTMTrainer(TrainerInterface):
 
         dwg.add(dwg.path(p).stroke(the_color, stroke_width).fill("none"))
 
-        dwg.save()
+        if self.save_generated_strokes:
+            log.info(f"Saving generated stroke in {gen_stroke_save_name}")
+            dwg.save()
+            self.gen_stroke_num += 1
 
     def line_plot(self, strokes, title):
-        plt.figure(figsize=(20,2))
+        """line_plot
+
+           Render a single handwriting sample.  Note that the handwriting samples will appear cropped.
+           That is because the trainer only uses the first *sequence_length* stroke points for training
+           and therefore for plotting here.
+        """
+
+        # File management
+        if self.save_samples:
+            hw_save_name = self.save_sample_base + r"_samples_" + str(self.hw_num) + r".png"
+            os.makedirs(os.path.dirname(hw_save_name), exist_ok=True)
+
+        fig = plt.figure(figsize=(20,2))
         eos_preds = np.where(strokes[:,-1] == 1)
         eos_preds = [0] + list(eos_preds[0]) + [-1] # Add start and end indices
+
         for i in range(len(eos_preds)-1):
             start = eos_preds[i]+1
             stop = eos_preds[i+1]
             plt.plot(strokes[start:stop,0], strokes[start:stop,1],'b-', linewidth=2.0)
         plt.title(title)
         plt.gca().invert_yaxis()
-        plt.imsave('testline.png')
+
+        if self.save_samples:
+            log.info(f"Saving handwriting sample \"{title}\" in {hw_save_name}")
+            fig.savefig(hw_save_name)
+            self.hw_num += 1
+
+        if self.display_images:
+            plt.show()
+        plt.close(fig)
+
+    def show_hw_samples(self, x, s):
+        """show_hw_samples
+
+           Convenience method to show or save all the samples in a batch.
+        """
+        save_display_flag = self.display_images
+
+        for i in range(self.n_batch):
+            r = x[i]
+            strokes = r.copy()
+            strokes[:,:-1] = np.cumsum(r[:,:-1], axis=0)
+            self.line_plot(strokes, s[i])
+
+            if self.display_images:   # Only display the first in a batch so user isn't flooded
+                self.display_images = False
+
+        self.display_images = save_display_flag
 
     def one_hot(self, s):
         """one_hot
@@ -221,12 +280,10 @@ class LSTMTrainer(TrainerInterface):
         """
 
         # File management
-        plot_phi_name = self.save_plot_base + r"_phi_" + str(self.plot_num) + r".png"
-        os.makedirs(os.path.dirname(plot_phi_name), exist_ok=True)
+        plot_save_name = self.save_plot_base + r"_weights_" + str(self.plot_num) + r".png"
+        os.makedirs(os.path.dirname(plot_save_name), exist_ok=True)
 
-        plot_wt_name = self.save_plot_base + r"_wt_" + str(self.plot_num) + r".png"
-        os.makedirs(os.path.dirname(plot_wt_name), exist_ok=True)
-
+        # Crop data array for more visually appealing plots
         def trim_empty_space(m, tol = 1e-3, r = None, c = None):
             # Trim zeroes at the bottom of the array
             if r is None:
@@ -248,46 +305,41 @@ class LSTMTrainer(TrainerInterface):
             else:
                 last_nonzero_col = c                                   # Or, the caller can just specify the amount to cut
 
-            return m[:last_nonzero_row, :last_nonzero_col]             # Execute the trim
+            return m[:last_nonzero_row, :last_nonzero_col]             # Execute the crop
 
-        # Two subplots
-        #plt.figure(figsize=(4, 8))
-        fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True)
-        fig.suptitle(r"Window Weights", fontsize=20)
-        fig.tight_layout()
-        #np.savetxt(".\phis.csv", Phis, delimiter=",")
-        #np.savetxt(".\plot_phis.csv", plot_phis, delimiter=",")
+        # Two subplots in figure
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True, figsize = (4, 8), constrained_layout = True)
+        fig.suptitle(r"Window Weights", fontsize=20, fontweight='bold')
 
         # Phi plot
-        #plt.subplot(211)
         plot_phis = trim_empty_space(Phis)
         log.debug(f"Trimmed Phi from {np.shape(Phis)} to {np.shape(plot_phis)} for plotting")
 
-        ax1.set_title('Phis', fontsize=15)
-        ax1.ylabel('Hi', fontsize=10)
-        log.info(f"Saving plot {plot_phi_name}")
+        ax1.set_title('Phis', fontsize=14)
+        ax1.set_ylabel(text, fontsize=10, style='normal', fontfamily='monospace', fontweight='bold')
         ax1.imshow(plot_phis, interpolation='nearest', origin='lower', aspect='auto', cmap=cm.jet)
-        #plt.imsave(plot_phi_name, Phis, cmap=cm.jet)
-        #log.debug(f"Phis plotted: {Phis}")
 
         # Soft weight (w_t) plot
-        #plt.subplot(212)
         plot_ws = trim_empty_space(Ws, tol = 1e-5, c = int(np.shape(plot_phis)[1]))
         log.debug(f"Trimmed weights from {np.shape(Ws)} to {np.shape(plot_ws)} for plotting")
+
+        ax2.set_title('Soft attention window', fontsize=14)
+        ax2.set_xlabel(r"Time Steps", fontsize=12, style='italic')
+        ax2.set_ylabel(r"One-hot Vector", fontsize=12, style='italic')
+        ax2.imshow(plot_ws, interpolation='nearest', origin='lower', aspect='auto', cmap=cm.jet)
+
+        # Save the data arrays if we need to examine them
+        #np.savetxt(".\phis.csv", Phis, delimiter=",")
+        #np.savetxt(".\plot_phis.csv", plot_phis, delimiter=",")
         #np.savetxt(".\ws.csv", Ws, delimiter=",")
         #np.savetxt(".\plot_ws.csv", plot_ws, delimiter=",")
 
-        #ax2.title('Soft attention window', fontsize=20)
-        #ax2.xlabel("Time steps", fontsize=15)
-        #ax2.ylabel("One-hot vector", fontsize=15)
-        log.info(f"Saving plot {plot_wt_name}")
-        ax2.imshow(plot_ws, interpolation='nearest', origin='lower', aspect='auto', cmap=cm.jet)
-        #plt.imsave(plot_wt_name, Ws, cmap=cm.jet)
-        log.debug(f"Ws plotted: {Ws}")
-
-        # Screen display
+        # Plot output
+        log.info(f"Saving plot {plot_save_name}")
+        fig.savefig(plot_save_name)
         if self.display_images:
             plt.show()
+        plt.close(fig)
 
         # Housekeeping
         self.plot_num += 1
@@ -476,6 +528,8 @@ with       25)
                 # Loading a batch (x : stroke sequences, y : same as x but shifted 1 timestep, c : one-hot encoded character sequence ofx)
                 log.info(f"Processing batch {batch}")
                 x, y, s, c = data_loader.next_batch()
+                self.show_hw_samples(x, s)
+
                 x = np.float32(np.array(x)) # -> (self.n_batch, self.sequence_length, 3)
                 y = np.float32(np.array(y)) # -> (self.n_batch, self.sequence_length, 3)
                 c = np.float32(np.array(c))
@@ -507,14 +561,13 @@ with       25)
             
                 # Useful infos over training
                 if batch % 10 == 0:
-                    epochMsg = f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item():.3f} in {(time.time() - start):.2f} seconds"
+                    epochMsg = f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item():.3f} took {(time.time() - start):.2f} seconds"
                     print(epochMsg)
                     log.info(epochMsg)
                     start = time.time()
                 
                     # Plot heatmaps every 100 batches
                     if batch % 100 == 0:
-                        print(s[0])
                         self.plot_heatmaps(s[0], model.Phis.transpose(0, 1).detach().numpy(), model.Ws.transpose(0, 1).detach().numpy())
                     
                     # Generate a sequence every 500 batches     

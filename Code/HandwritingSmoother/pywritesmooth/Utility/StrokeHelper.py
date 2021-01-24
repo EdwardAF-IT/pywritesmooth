@@ -1,4 +1,4 @@
-import numpy as np, logging as log
+import sys, numpy as np, logging as log
 
 class StrokeHelper(object):
     """StrokeHelper
@@ -32,3 +32,14 @@ class StrokeHelper(object):
 
         log.debug(f"Normalized array: {new}")
         return(new)
+
+    def progress(count, total, status=''):
+        bar_len = 60
+        filled_len = int(round(bar_len * count / float(total)))
+
+        percents = round(100.0 * count / float(total), 1)
+        percents = 100.0 if percents > 99.5 else percents       # Show 100% if complete
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+        sys.stdout.flush()

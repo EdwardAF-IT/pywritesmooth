@@ -8,8 +8,8 @@ use_cuda = False
 use_cuda = torch.cuda.is_available()
 
 # Display
-from ipywidgets import FloatProgress
 from IPython.display import SVG, display
+import pywritesmooth.Utility.StrokeHelper as sh
 
 class HandwritingSynthesisModel(nn.Module):
     """HandwritingSynthesisModel
@@ -27,19 +27,41 @@ class HandwritingSynthesisModel(nn.Module):
         coordinates via skip connections. LSTM2 and LSTM3 of course take the hidden vectors of 
         the LSTM1 and LSTM2 respectively. This is summarized by equations 52 and 53.
 
+
+        52)
+         1     /                 1                    1\
+        h  = H |W    x  + W     h      + W    w    + b |
+         t     \ ih1  t    h1h1  t-1      wh1  t-1    h/
+
+         53)
+          2     / n        n - 1  n  n - 1    n  n  n        n        n\
+         h  = H |W   x  + W      h  h      + W  h  h      + W   w  + b |
+          t     \ ih  t    h         t        h     t - 1    wh  t    h/
+
+
         The Gaussian mixtures are created using a dense layer. It takes the output of the last 
         LSTM layer. Say the hidden size is 256 and you want 10 mixtures, this allows to scale 
         your vector to the desired size. This gives ŷ of equation 17 of the paper.
 
+
+        17)
+                   N
+                 =====
+                 \          n
+        ŷ = b  +  >    W   h
+             y   /      h y t
+                 =====   n
+                 n = 1
+
         ŷ is then broken down into the different parameters of the mixture.
             * ê is the probability of the end of a stroke given by a Bernoulli distribution
             * w (or Π) is the weight of each Normal distribution
-            * 𝜇,𝜎,𝜌  are the mean, standard deviation and correlation factor of each bivariate 
+            * 𝜇,𝜎,𝜌 are the mean, standard deviation and correlation factor of each bivariate 
              Normal Distribution. The constructor just lays out the blocks but does not create 
              relations between them. That's the job of the forward function.
 
-        The network is summarized by figure 12 (it does show the third hidden layer which does 
-        pretty much the same thing as the second).
+        The network is summarized by figure 12 in the paper (it does show the third hidden 
+        layer which does pretty much the same thing as the second).
 
         Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
@@ -61,6 +83,8 @@ class HandwritingSynthesisModel(nn.Module):
 
         super(HandwritingSynthesisModel, self).__init__()
         
+        self.helper = sh.StrokeHelper
+
         self.Kmixtures = Kmixtures
         self.n_gaussians = n_gaussians
         self.alphabet_size = alphabet_size
@@ -100,8 +124,7 @@ class HandwritingSynthesisModel(nn.Module):
         
         # Saves hidden and cell states
         self.LSTMstates = None
-        
-        
+              
     def forward(self, x, c, generate = False):
         """forward
 
@@ -114,7 +137,7 @@ class HandwritingSynthesisModel(nn.Module):
             c, a batch of one-hot encoded sentences corresponding to the stroke sequence is 
             of dimensions [n_batch, U_items, len(alphabet)]. It is estimated that a letter 
             corresponds to 25 points. U_items is the number of characters in the sequence. 
-            For example, if the sequence is 400 points long, U_items = 400 / 25 = 16 charcaters. 
+            For example, if the sequence is 400 points long, U_items = 400 / 25 = 16 characters. 
             len(alphabet) is the number of characters in our alphabet.
 
             Note that the forward function is also used to generate random sequences.
@@ -125,12 +148,83 @@ class HandwritingSynthesisModel(nn.Module):
             After LSTM1, the code computes the attention mechanism given by equations 46-51 
             of the paper.
 
+            46)
+                        K
+                      =====       /              2\
+                      \      k    |/  k\ / k    \ |
+            Φ(t,u) =   >    α  exp||-β | |κ  - u| |
+                      /      t    \\  t/ \ t    / /
+                      =====
+                      k = 1
+
+            47)
+                   U
+                 =====
+                 \
+            w  =  >    Φ(t,u) c
+             t   /             u
+                 =====
+                 u = 1
+
+            48)
+                                           1
+            (αhat , βhat , κhat ) = W     h  + b
+                 t      t      t       1    t    p
+                                      h  p
+            49)
+            α  = exp/αhat \
+             t      \    t/
+
+            50)
+            β  = exp/βhat \
+             t      \    t/
+
+            51)
+            κ  = κ      + exp/κhat \
+             t    t - 1      \    t/
+
+
             After that, the networks computes LSTM2 and LSTM3. Then it's just a matter of 
             computing 18 - 22 of the paper using a dense layer.
+
+            18)
+                      1
+            e  = -----------            ==>  e  E (0,1)
+             t   1 + exp/ê \                  t
+                        \ t/
+
+            19)
+                                              
+                         /_^j\                          =====
+            __j       exp\||t/              __j         \     __j
+            ||  = ----------------      ==> ||  E (0,1), >    || 
+              t      M                        t         /       t
+                   =====                                =====
+                   \        /_^j'\                        j
+                    >    exp\||  /
+                   /           t
+                   =====
+                  j' = 1
+
+            20)
+             j    j                           j
+            𝜇  = 𝜇hat                   ==>  𝜇  E R
+             t    t                           t
+
+            21)
+             j      / j  \                   j
+            𝜎  = exp|𝜎hat|              ==> 𝜎  > 0
+             t      \ t  /                   t
+
+            22)
+             j       / j \                   j
+            𝜌  = tanh|𝜌hat|             ==> 𝜌  E (-1,1)
+             t       \ t  /                  t
         """
 
         # Sequence length
         sequence_length = x.shape[0]
+        #log.debug(f"Seq: {sequence_length}")
         
         # Number of batches
         n_batch = x.shape[1]
@@ -239,32 +333,32 @@ class HandwritingSynthesisModel(nn.Module):
             
         # ===== Computing MDN =====
         es = self.z_e(out)
-        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
+        #log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
         es = 1 / (1 + torch.exp(es))
-        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
+        #log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch, 1])
 
         pis = self.z_pi(out) * (1 + self.bias)
-        log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
         pis = torch.softmax(pis, 2)
-        log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"pis shape {pis.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         mu1s = self.z_mu1(out) 
         mu2s = self.z_mu2(out)
-        log.debug(f"mu shape :  {mu1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"mu shape :  {mu1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         sigma1s = self.z_sigma1(out)
         sigma2s = self.z_sigma2(out)
-        log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
         sigma1s = torch.exp(sigma1s - self.bias)
         sigma2s = torch.exp(sigma2s - self.bias)
-        log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"sigmas shape {sigma1s.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         rhos = self.z_rho(out)
         rhos = torch.tanh(rhos)
-        log.debug(f"rhos shape {rhos.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
+        #log.debug(f"rhos shape {rhos.shape}") # -> torch.Size([sequence_length, batch, n_gaussians])
 
         es = es.squeeze(2) 
-        log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch])
+        #log.debug(f"es shape {es.shape}") # -> torch.Size([sequence_length, batch])
 
         # Hidden and cell states
         if generate:
@@ -314,11 +408,8 @@ class HandwritingSynthesisModel(nn.Module):
         sample = x0
         sequence_length = c0.shape[1] * 25
         
-        print("Generating sequence ...")
         log.info("Generating sequence ...")
         self.bias = bias
-        f = FloatProgress(min=0, max=sequence_length)
-        display(f)
 
         for i in range(sequence_length):
             es, pis, mu1s, mu2s, sigma1s, sigma2s, rhos = self.forward(sample, c0, True)
@@ -343,7 +434,7 @@ class HandwritingSynthesisModel(nn.Module):
             
             sequence = torch.cat((sequence, sample), 0) # torch.Size([sequence_length, 1, 3])
             
-            f.value += 1
+            self.helper.progress(count = i, total = sequence_length, status="Generating sequence      ")
         
         self.bias = 0
         self.LSTMstates = None

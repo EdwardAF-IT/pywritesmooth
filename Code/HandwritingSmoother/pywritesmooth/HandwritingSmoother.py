@@ -18,7 +18,9 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
 @click.option('-l', '--log-file', type=click.STRING, help = 'Filename of the log file')
 @click.option('-ll', '--log-level', type=click.STRING, help = 'Logging level: critical, error, warning, info, or debug')
-def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, log_file = None, log_level = None):
+@click.option('-is', '--image-save', type=click.STRING, help = 'Location to save plot images; file name given will have numbers appended, i.e. images\phi will become images\phi1.png, phi2.png, etc.')
+@click.option('-id', '--image-display', is_flag=True, help = 'To display or not to display.. the plots')
+def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, log_file = None, log_level = None, image_save = None, image_display = False):
     """The main routine.
     
     
@@ -68,14 +70,19 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
             print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
 
         # Default model file
-        hwModelSave = ".\hwSynthesis.model"
+        hwModelSave = r".\hwSynthesis.model"
         if not saved_model is None:
             hwModelSave = saved_model
 
         # Default pickled data file
-        hwDataSave = ".\hwData.pkl"
+        hwDataSave = r".\hwData.pkl"
         if not pickled_data is None:
             hwDataSave = pickled_data
+
+        # Image save location
+        hwPlotImages = r".\plots\phi"
+        if not image_save is None:
+            hwPlotImages = image_save
 
         if not train is None:
             if train_models is None:
@@ -92,7 +99,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
 
                 for modelName in train_models:
                     if modelName == 'lstm':
-                        models.append(lstm.LSTMTrainer(saved_model))
+                        models.append(lstm.LSTMTrainer(hwModelSave, image_display, hwPlotImages))
                     if modelName == 'gan':
                         models.append(gan.GANTrainer())
 

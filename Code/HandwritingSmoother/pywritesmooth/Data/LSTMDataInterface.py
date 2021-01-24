@@ -1,5 +1,6 @@
 # Basics
 import numpy as np, logging as log
+import reprlib
 
 class LSTMDataInterface():
     """  LSTMDataInterface
@@ -45,7 +46,7 @@ class LSTMDataInterface():
         for i in range(len(self.raw_stroke_data)):
             data = self.raw_stroke_data[i]
             if len(data) > (self.tsteps+2):
-                # removes large gaps from the data
+                # Removes large gaps from the data
                 data = np.minimum(data, self.limit)
                 data = np.maximum(data, -self.limit)
                 data = np.array(data,dtype=np.float32)
@@ -90,13 +91,21 @@ class LSTMDataInterface():
         # Index position 0 means "unknown"
         if self.alphabet is "default":
             alphabet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-        seq = [alphabet.find(char) + 1 for char in s]
+
+        if s is None:
+            seq = [0]
+            log.debug(f"One hotting: nothing")
+        else:
+            seq = [alphabet.find(char) + 1 for char in s]
+            log.debug(f"One hotting: {s}")
+
         if len(seq) >= self.U_items:
             seq = seq[:self.U_items]
         else:
             seq = seq + [0]*(self.U_items - len(seq))
         one_hot = np.zeros((self.U_items,len(alphabet)+1))
         one_hot[np.arange(self.U_items),seq] = 1
+
         return one_hot
 
     def tick_batch_pointer(self):

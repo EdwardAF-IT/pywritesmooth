@@ -48,11 +48,18 @@ class LSTMTrainer(TrainerInterface):
        Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
     def init(self):
+        # Preferences
+        self.display_images = False
+        self.save_plot_base = f".\plots\phi"
+        self.plot_num = 1
+
+        # Batch params
         self.n_batch = 20
         self.sequence_length = 400
         self.U_items = int(self.sequence_length/25)
         self.eps = float(np.finfo(np.float32).eps)
 
+        # Network params
         self.hidden_size = 256
         self.n_layers = 3
         self.n_gaussians = 20
@@ -62,9 +69,11 @@ class LSTMTrainer(TrainerInterface):
         self.gradient_threshold = 10
         self.dropout = 0.2
 
-    def __init__(self, saved_model = None):
+    def __init__(self, saved_model = None, display_images = False, save_plot_base = f".\plots\phi"):
         log.debug("In ltsm con")
         self.init()
+        self.display_images = display_images
+        self.save_plot_base = save_plot_base
         self.saved_model = saved_model
 
         cudaMsg = "Using CUDA" if use_cuda else "Not using CUDA"
@@ -157,7 +166,6 @@ class LSTMTrainer(TrainerInterface):
         dwg.add(dwg.path(p).stroke(the_color, stroke_width).fill("none"))
 
         dwg.save()
-        display(SVG(dwg.tostring()))
 
     def line_plot(self, strokes, title):
         plt.figure(figsize=(20,2))
@@ -169,7 +177,7 @@ class LSTMTrainer(TrainerInterface):
             plt.plot(strokes[start:stop,0], strokes[start:stop,1],'b-', linewidth=2.0)
         plt.title(title)
         plt.gca().invert_yaxis()
-        plt.show()
+        plt.imsave('testline.png')
 
     def one_hot(self, s):
         """one_hot
@@ -186,25 +194,103 @@ class LSTMTrainer(TrainerInterface):
         one_hot[np.arange(len(s)),seq] = 1
         return one_hot
 
-    def plot_heatmaps(self, Phis, Ws):
+    def plot_heatmaps(self, text, Phis, Ws):
         """plot_heatmaps
 
-           plots Phis and soft-window heatmaps. It corresponds to the values of equations 
+           Plots Phis and soft-window heatmaps. It corresponds to the values of equations 
            46 and 47 of the paper. 
+
+
+           46)
+                        K
+                      =====       /              2\
+                      \      k    |/  k\ / k    \ |
+            Φ(t,u) =   >    α  exp||-β | |κ  - u| |
+                      /      t    \\  t/ \ t    / /
+                      =====
+                      k = 1
+            47)
+                   U
+                 =====
+                 \
+            w  =  >    Φ(t,u) c
+             t   /             u
+                 =====
+                 u = 1
+
         """
 
-        fig = plt.figure(figsize=(16,4))
-        plt.subplot(121)
-        plt.title('Phis', fontsize=20)
-        plt.xlabel("Time stself.eps", fontsize=15)
-        plt.ylabel("Ascii #", fontsize=15)
-    
-        plt.imshow(Phis, interpolation='nearest', aspect='auto', cmap=cm.jet)
-        plt.subplot(122)
-        plt.title('Soft attention window', fontsize=20)
-        plt.xlabel("Time stself.eps", fontsize=15)
-        plt.ylabel("One-hot vector", fontsize=15)
-        plt.imsave('test.png', Ws, cmap=cm.jet)
+        # File management
+        plot_phi_name = self.save_plot_base + r"_phi_" + str(self.plot_num) + r".png"
+        os.makedirs(os.path.dirname(plot_phi_name), exist_ok=True)
+
+        plot_wt_name = self.save_plot_base + r"_wt_" + str(self.plot_num) + r".png"
+        os.makedirs(os.path.dirname(plot_wt_name), exist_ok=True)
+
+        def trim_empty_space(m, tol = 1e-3, r = None, c = None):
+            # Trim zeroes at the bottom of the array
+            if r is None:
+                for first_row_elem_with_zeroes in range(len(m[:,0])-1, 0, -1):  # Go in reverse so meaningful data gaps are retained
+                    row = m[first_row_elem_with_zeroes,:]              # Examine each row in turn
+                    if np.sum(row) > tol:                              # If the entire row is above the tolerance, we are done
+                        break
+                last_nonzero_row = first_row_elem_with_zeroes + 1
+            else:
+                last_nonzero_row = r                                   # Or, the caller can just specify the amount to cut
+
+            # Trim zeroes to the right side of the array
+            if c is None:
+                for first_col_elem_with_zeroes in range(len(m[0,:])-1, 0, -1):  # Go in reverse so meaningful data gaps are retained
+                    col = m[:,first_col_elem_with_zeroes]              # Examine each column in turn
+                    if np.sum(col) > tol:                              # If the entire column is above the tolerance, we are done
+                        break
+                last_nonzero_col = first_col_elem_with_zeroes + 1
+            else:
+                last_nonzero_col = c                                   # Or, the caller can just specify the amount to cut
+
+            return m[:last_nonzero_row, :last_nonzero_col]             # Execute the trim
+
+        # Two subplots
+        #plt.figure(figsize=(4, 8))
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True)
+        fig.suptitle(r"Window Weights", fontsize=20)
+        fig.tight_layout()
+        #np.savetxt(".\phis.csv", Phis, delimiter=",")
+        #np.savetxt(".\plot_phis.csv", plot_phis, delimiter=",")
+
+        # Phi plot
+        #plt.subplot(211)
+        plot_phis = trim_empty_space(Phis)
+        log.debug(f"Trimmed Phi from {np.shape(Phis)} to {np.shape(plot_phis)} for plotting")
+
+        ax1.set_title('Phis', fontsize=15)
+        ax1.ylabel('Hi', fontsize=10)
+        log.info(f"Saving plot {plot_phi_name}")
+        ax1.imshow(plot_phis, interpolation='nearest', origin='lower', aspect='auto', cmap=cm.jet)
+        #plt.imsave(plot_phi_name, Phis, cmap=cm.jet)
+        #log.debug(f"Phis plotted: {Phis}")
+
+        # Soft weight (w_t) plot
+        #plt.subplot(212)
+        plot_ws = trim_empty_space(Ws, tol = 1e-5, c = int(np.shape(plot_phis)[1]))
+        log.debug(f"Trimmed weights from {np.shape(Ws)} to {np.shape(plot_ws)} for plotting")
+        #np.savetxt(".\ws.csv", Ws, delimiter=",")
+        #np.savetxt(".\plot_ws.csv", plot_ws, delimiter=",")
+
+        #ax2.title('Soft attention window', fontsize=20)
+        #ax2.xlabel("Time steps", fontsize=15)
+        #ax2.ylabel("One-hot vector", fontsize=15)
+        log.info(f"Saving plot {plot_wt_name}")
+        ax2.imshow(plot_ws, interpolation='nearest', origin='lower', aspect='auto', cmap=cm.jet)
+        #plt.imsave(plot_wt_name, Ws, cmap=cm.jet)
+        log.debug(f"Ws plotted: {Ws}")
+
+        # Screen display
+        if self.display_images:
+            plt.show()
+
+        # Housekeeping
+        self.plot_num += 1
 
     def get_n_params(self, model):
         """get_n_params
@@ -227,6 +313,31 @@ class LSTMTrainer(TrainerInterface):
            output vector (the Gaussian mixtures parameters). In the paper, this is given 
            by equations 23-25. This will be useful when computing the loss function.
 
+           23)
+                            M				   
+                          =====        					   / e      if (x   ) = 1
+			              \    	__j     	 j   j   j    |   t        ( t+1)3  
+            Pr(x  	|y) =  >    ||   N(x   |μ , σ , ρ )  <    
+	            t+1   t   /		  t		t+1  t 	 t   t    | 1-e	  otherwise
+			              =====			                   \   t
+			              j = 1
+
+where       24)
+                                   1             /    -Z    \
+            N(x|μ,σ,ρ) = -------------------- exp|----------|
+                                       ______    |  /     2\|
+                           __         /     2    \2 \1 - ρ //
+                         2 || σ  σ  \/ 1 - ρ
+                               1  2
+with       25)
+                         2            2
+                /x  - μ \    /x  - μ \    2 ρ /x  - μ \ /x  - μ \
+                \ 1    1/    \ 2    2/        \ 1    1/ \ 2    2/
+            Z = ---------- + ---------- - -----------------------
+                     2            2                σ  σ
+                    σ            σ                  1  2
+                     1            2
+
            The Bernouilli part from the paper is excluded here. It will be computed in the 
            loss function.
 
@@ -242,18 +353,18 @@ class LSTMTrainer(TrainerInterface):
     
         # Takes x1 and repeats it over the number of gaussian mixtures
         x1 = y[:,:, 0].repeat(n_mixtures, 1, 1).permute(1, 2, 0) 
-        log.debug(f"x1 shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        #log.debug(f"x1 shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # First term of Z (eq 25)
         x1norm = ((x1 - mu1s) ** 2) / (sigma1s ** 2 )
-        log.debug(f"x1norm shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        #log.debug(f"x1norm shape {x1.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         x2 = y[:,:, 1].repeat(n_mixtures, 1, 1).permute(1, 2, 0)  
-        log.debug(f"x2 shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        #log.debug(f"x2 shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # Second term of Z (eq 25)
         x2norm = ((x2 - mu2s) ** 2) / (sigma2s ** 2 )
-        log.debug(f"x2norm shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
+        #log.debug(f"x2norm shape {x2.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])
     
         # Third term of Z (eq 25)
         coxnorm = 2 * rhos * (x1 - mu1s) * (x2 - mu2s) / (sigma1s * sigma2s) 
@@ -263,13 +374,13 @@ class LSTMTrainer(TrainerInterface):
     
         # Gaussian bivariate (eq 24)
         N = torch.exp(-Z / (2 * (1 - rhos ** 2))) / (2 * np.pi * sigma1s * sigma2s * (1 - rhos ** 2) ** 0.5) 
-        log.debug(f"N shape {N.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians]) 
+        #log.debug(f"N shape {N.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians]) 
     
         # Pr is the result of eq 23 without the eos part
         Pr = pis * N 
-        log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])   
+        #log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch, self.n_gaussians])   
         Pr = torch.sum(Pr, dim=2) 
-        log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch])   
+        #log.debug(f"Pr shape {Pr.shape}") # -> torch.Size([self.sequence_length, batch])   
     
         if use_cuda:
             Pr = Pr.cuda()
@@ -285,6 +396,15 @@ class LSTMTrainer(TrainerInterface):
            training step's goal is to converge toward the best parameters for the data. 
 
            In the paper, the loss is given by equation 26:
+
+           26)
+                    T
+	              =====		===== 				         /
+                  \		    \     __j        j  j  j     | log e     if (x   ) = 1
+            L(x) = >   -log  >    || N(x   |μ ,σ ,ρ ) - <       t       ( t+1)3
+	              /	       	/	    t   t+1	 t  t  t     | log(1-e ) otherwise
+	              =====		=====                        \        t
+	              t = 1		  j
 
            We previously calculated the first element of the equation in 
            gaussianMixture(...). What's left is to add the Bernoulli loss (second part 
@@ -348,13 +468,13 @@ class LSTMTrainer(TrainerInterface):
     
         # Loop over epochs
         for epoch in range(epochs):
-            log.debug(f"Processing epoch {epoch}")
+            log.info(f"Processing epoch {epoch}")
             data_loader.reset_batch_pointer()
         
             # Loop over batches
             for batch in range(data_loader.num_batches):
                 # Loading a batch (x : stroke sequences, y : same as x but shifted 1 timestep, c : one-hot encoded character sequence ofx)
-                log.debug(f"Processing batch {batch}")
+                log.info(f"Processing batch {batch}")
                 x, y, s, c = data_loader.next_batch()
                 x = np.float32(np.array(x)) # -> (self.n_batch, self.sequence_length, 3)
                 y = np.float32(np.array(y)) # -> (self.n_batch, self.sequence_length, 3)
@@ -387,14 +507,15 @@ class LSTMTrainer(TrainerInterface):
             
                 # Useful infos over training
                 if batch % 10 == 0:
-                    print("Epoch : ", epoch, " - step ", batch, "/", data_loader.num_batches, " - loss ", loss.item(), " in ", time.time() - start)
-                    log.info(f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item()} in {time.time() - start}")
+                    epochMsg = f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item():.3f} in {(time.time() - start):.2f} seconds"
+                    print(epochMsg)
+                    log.info(epochMsg)
                     start = time.time()
                 
                     # Plot heatmaps every 100 batches
                     if batch % 100 == 0:
                         print(s[0])
-                        self.plot_heatmaps(model.Phis.transpose(0, 1).detach().numpy(), model.Ws.transpose(0, 1).detach().numpy())
+                        self.plot_heatmaps(s[0], model.Phis.transpose(0, 1).detach().numpy(), model.Ws.transpose(0, 1).detach().numpy())
                     
                     # Generate a sequence every 500 batches     
                     if generate and batch % 500 == 0 :
@@ -406,8 +527,7 @@ class LSTMTrainer(TrainerInterface):
                         for i in range(5):
                             sequence = model.generate_sequence(x0, c0, bias = 10)
                             seqMsg = f"Sequence shape = {sequence.shape}"
-                            print(seqMsg)
-                            log.info(seqMsg)
+                            log.debug(seqMsg)
                             self.draw_strokes(sequence, factor=0.5)
                     
                 # Save loss per batch

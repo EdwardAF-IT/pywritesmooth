@@ -31,7 +31,19 @@ setuptools.setup(
     url="https://github.com/EdwardAF-IT/Capstone",
     packages=setuptools.find_packages(),
     install_requires=[
-        'Click',
+        'beautifulsoup4',
+        'click',
+        'ipython',
+        'ipywidgets',
+        'lxml',
+        'matplotlib',
+        'numpy',
+        'Pillow',
+        'pytorch-lightning',
+        'scikit-learn',
+        'scipy',
+        'svgwrite',
+        'torch'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

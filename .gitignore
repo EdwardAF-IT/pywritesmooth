@@ -138,3 +138,6 @@ dmypy.json
 *.png
 *.jpg
 *.svg
+logs/
+strokes/
+plots/

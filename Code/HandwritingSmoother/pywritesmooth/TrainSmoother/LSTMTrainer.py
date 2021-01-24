@@ -51,7 +51,7 @@ class LSTMTrainer(TrainerInterface):
     def init(self):
         # Preferences
         self.display_images = False
-        self.save_plot_base = os.path-join(".", "plots", "phi")
+        self.save_plot_base = os.path.join(".", "plots", "phi")
         self.plot_num = 1
         self.hw_plot_base = os.path.join(".", "samples", "hw")
         self.hw_num = 1

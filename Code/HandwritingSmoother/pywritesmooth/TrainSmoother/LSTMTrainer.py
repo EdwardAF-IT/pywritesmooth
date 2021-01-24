@@ -503,7 +503,7 @@ with       25)
         optimizer = optim.Adam(model.parameters(), lr=0.005)
     
         # A sequence the model is going to try to write as it learns
-        c0 = np.float32(self.one_hot("writing is hard!"))
+        c0 = np.float32(self.one_hot("Handwriting sample"))
         c0 = torch.from_numpy(c0) 
         c0 = torch.unsqueeze(c0, 0) # torch.Size(self.n_batch, self.U_items, len(alphabet))
         start = time.time()

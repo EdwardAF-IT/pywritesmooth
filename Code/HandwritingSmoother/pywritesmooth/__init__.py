@@ -1,4 +1,4 @@
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 __author__ = 'YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu'
 __credits__ = 'Dr John Santerre'
 __all__ = ['HandwritingSmoother']

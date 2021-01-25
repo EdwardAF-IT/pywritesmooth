@@ -371,7 +371,7 @@ class LSTMTrainer(TrainerInterface):
             fig.savefig(plot_save_name)
             self.plot_num += 1
         except:
-            log.error(f"Could not save plot {}", exc_info=True)
+            log.error(f"Could not save plot {plot_save_name}", exc_info=True)
 
         if self.display_images:
             plt.show()

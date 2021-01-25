@@ -1,4 +1,4 @@
-# Basics
+# Basics    
 import sys, os, click, glob, logging as log
 
 # Project
@@ -117,6 +117,9 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 log.info(f"Training model args: {train_models}")
                 hw_input = get_file_list(train)
                 log.debug(f"Input files: {hw_input}")
+
+                # Get base from cl args to be os independent
+                print(train[:train.lower().find("data")])
 
                 writing_sample = sds.StrokeDataset(hw_input, hw_data_save)
                 models = []

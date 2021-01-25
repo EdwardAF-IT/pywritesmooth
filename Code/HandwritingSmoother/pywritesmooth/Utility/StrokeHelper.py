@@ -14,7 +14,7 @@ class StrokeHelper(object):
         log.debug("Default contructor")
         self.init()
 
-    def normalizePoints(self, points):
+    def normalize_points(self, points):
         """normalizePoints
 
            Return the collection of stroke points as a 2D numpy array where the minimum point valules are 0.
@@ -43,6 +43,3 @@ class StrokeHelper(object):
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
-
-        if percents == 100.0:
-            print()

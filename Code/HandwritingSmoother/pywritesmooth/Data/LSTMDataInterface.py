@@ -12,7 +12,7 @@ class LSTMDataInterface():
         Adapted from: https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis
     """
 
-    def __init__(self, trainStrokeset, batch_size=50, tsteps=300, scale_factor = 10, U_items=10, limit = 500, alphabet="default"):
+    def __init__(self, train_strokeset, batch_size=50, tsteps=300, scale_factor = 10, U_items=10, limit = 500, alphabet="default"):
         self.alphabet = alphabet
         self.batch_size = batch_size
         self.tsteps = tsteps
@@ -20,10 +20,10 @@ class LSTMDataInterface():
         self.limit = limit # Removes large noisy gaps in the data
         self.U_items = U_items
 
-        self.load_preprocessed(trainStrokeset)
+        self.load_preprocessed(train_strokeset)
         self.reset_batch_pointer()
 
-    def load_preprocessed(self, trainStrokeset):
+    def load_preprocessed(self, train_strokeset):
         """load_preprocessed
 
            The key to the whole class is in here; it must be able to obtain the stroke data in the
@@ -35,8 +35,8 @@ class LSTMDataInterface():
 
         """
         # Get data in the loader's required format
-        self.raw_stroke_data = trainStrokeset.getStrokeMatrix()
-        self.raw_ascii_data = trainStrokeset.getAsciiList()
+        self.raw_stroke_data = train_strokeset.get_stroke_matrix()
+        self.raw_ascii_data = train_strokeset.get_ascii_list()
 
         # Goes thru the list and only keeps the text entries that have more than tsteps points
         self.stroke_data = []

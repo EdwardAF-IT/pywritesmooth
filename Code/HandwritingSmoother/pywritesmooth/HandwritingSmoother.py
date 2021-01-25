@@ -13,7 +13,7 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
 @click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
 @click.option('-ss', '--smooth-sample', type=click.STRING, help="Filename of a writing sample in online (XML) format similar to the structure of the IAM dataset")
-@click.option('-t', '--train', type=click.STRING, help = 'Image file(s) of printed digits or letters in upper or lower case to train the model(s)')
+@click.option('-t', '--train', type=click.STRING, help = 'Folder that contains image file(s) of printed digits or letters in upper or lower case to train the model(s)')
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
 @click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
 @click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
@@ -76,35 +76,35 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
 
         if train is None and smooth is None:
             try:
-                calledName = __loader__.fullname  # When called as a module
+                called_name = __loader__.fullname  # When called as a module
                 log.debug("Running as a module")
             except:
-                calledName = os.path.basename(__file__)  # When called as a script
+                called_name = os.path.basename(__file__)  # When called as a script
                 log.debug("Running as a script")
 
             #print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
-            print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | lstm>  --OR--")
-            print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
+            print("Usage: ", called_name, " --smooth <handwriting sample> --smooth-model <gan | lstm>  --OR--")
+            print("Usage: ", called_name, " --train <handwriting sample> --train-models <gan | lstm>")
 
         # Default model file
-        hwModelSave = os.path.join(".", "hwSynthesis.model")
+        hw_model_save = os.path.join(".", "hwSynthesis.model")
         if not saved_model is None:
-            hwModelSave = saved_model
+            hw_model_save = saved_model
 
         # Default pickled data file
-        hwDataSave = os.path.join(".", "hwData.pkl")
+        hw_data_save = os.path.join(".", "hwData.pkl")
         if not pickled_data is None:
-            hwDataSave = pickled_data
+            hw_data_save = pickled_data
 
         # Image save location
-        hwPlotImages = os.path.join(".", "plots", "phi")
+        hw_plot_images = os.path.join(".", "plots", "phi")
         if not image_save is None:
-            hwPlotImages = image_save
+            hw_plot_images = image_save
 
         # Sample save location
-        hwSaveSamples= os.path.join(".", "samples", "hw")
+        hw_save_samples= os.path.join(".", "samples", "hw")
         if not hw_save is None:
-            hwSaveSamples = hw_save
+            hw_save_samples = hw_save
 
         # Train models of interest
         if not train is None:
@@ -115,24 +115,24 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
             else:
                 log.info(f"Training model data: {train}")
                 log.info(f"Training model args: {train_models}")
-                hwInput = glob.glob(train)
-                log.debug(f"Input files: {hwInput}")
+                hw_input = get_file_list(train)
+                log.debug(f"Input files: {hw_input}")
 
-                writingSample = sds.StrokeDataset(hwInput, hwDataSave)
+                writing_sample = sds.StrokeDataset(hw_input, hw_data_save)
                 models = []
 
-                for modelName in train_models:
-                    if modelName == 'lstm':
-                        models.append(lstm.LSTMTrainer(hwModelSave, image_display, 
-                                                       hwPlotImages, handwriting_save, 
-                                                       hwSaveSamples, generated_save))
-                    if modelName == 'gan':
+                for model_name in train_models:
+                    if model_name == 'lstm':
+                        models.append(lstm.LSTMTrainer(hw_model_save, image_display, 
+                                                       hw_plot_images, handwriting_save, 
+                                                       hw_save_samples, generated_save))
+                    if model_name == 'gan':
                         models.append(gan.GANTrainer())
 
-                models = BuildModels(writingSample, models)
+                models = build_models(writing_sample, models)
 
                 if test_model:
-                    WriteText(models)
+                    write_text(models)
 
         # Smooth handwriting sample provided by the user
         if not smooth is None:
@@ -146,11 +146,11 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 return EXIT_FAILURE
             else:
                 log.info(f"Smoothing models selected: {smooth_model}")
-                SmoothWriting(smooth_sample, models)
+                smooth_writing(smooth_sample, models)
 
         # Generate handwritten text supplied by user
         if not write is None:
-            WriteText(models, write)
+            write_text(models, write)
 
     except NotImplementedError as nie:
         print("Ran into some code that needs implementation: ", nie)
@@ -164,28 +164,28 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
     log.info("Exiting normally")
     return EXIT_SUCCESS
 
-def BuildModels(hw, modelsToTrain):
+def build_models(hw, models_to_train):
     """BuildModels
 
        Have each model train itself or load a trained model.
     """
 
-    for model in modelsToTrain:
+    for model in models_to_train:
         model.train(hw)
 
-    return modelsToTrain
+    return models_to_train
 
-def WriteText(trainedModels, genList = ['Sample text']):
+def write_text(trained_models, gen_list = ['Sample text']):
     """WriteText
 
        Test the models available by having them generate handwriting from sample text.
     """
 
-    for model in trainedModels:
-        for text in genList:
-            model.asHandwriting(text)
+    for model in trained_models:
+        for text in gen_list:
+            model.as_handwriting(text)
 
-def SmoothWriting(hwSample, models):
+def smooth_writing(hw_sample, models):
     """SmoothWriting
 
        Smooth a handwriting sample.  The sample must be in the IAM online data format (XML)
@@ -194,7 +194,15 @@ def SmoothWriting(hwSample, models):
 
     """
     for model in models:
-        model.smoothHandwriting(hwSample)   
+        model.smooth_handwriting(hw_sample)  
+        
+def get_file_list(folder):
+    """get_file_list
+
+       Expand all the XML files in a folder and return the resulting list.
+    """
+
+    return [os.path.join(root, f) for root, dirs, files in os.walk(folder) for f in files]
 
 if __name__ == "__main__":
     sys.exit(main())

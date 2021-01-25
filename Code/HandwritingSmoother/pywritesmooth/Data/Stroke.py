@@ -34,15 +34,15 @@ class Stroke(object):
         log.debug("Default constructor")
         self.init()
 
-    def __init__(self, strokeXML, x_offset = 0, y_offset = 0):
+    def __init__(self, stroke_XML, x_offset = 0, y_offset = 0):
         log.debug("Loader constructor")
         self.init()
-        self.load(strokeXML, x_offset, y_offset)
+        self.load(stroke_XML, x_offset, y_offset)
 
     def __len__(self):
-        return(len(self.getPoints()))
+        return(len(self.get_points()))
 
-    def load(self, strokeXML, x_offset = 0, y_offset = 0):
+    def load(self, stroke_XML, x_offset = 0, y_offset = 0):
         """load
 
            strokeXML is an XML of a stroke, which is a collection of points.  In addition, if
@@ -50,10 +50,10 @@ class Stroke(object):
         """
 
         # Load points from stroke XML
-        log.debug(f"Loading from raw stroke: {strokeXML}")
-        pointsXML = bs(str(strokeXML), 'lxml')
-        log.debug(f"Stroke parsed XML: {pointsXML}")
-        points = pointsXML.find_all("point")
+        log.debug(f"Loading from raw stroke: {stroke_XML}")
+        points_XML = bs(str(stroke_XML), 'lxml')
+        log.debug(f"Stroke parsed XML: {points_XML}")
+        points = points_XML.find_all("point")
         log.debug(f"Loading points: {points}")
 
         try:
@@ -68,7 +68,7 @@ class Stroke(object):
         except:
             log.warning(f"Could not parse point {point}", exc_info=True)
 
-    def asNumpyArray(self):
+    def as_numpy_array(self):
         """asNumpyArray
 
            Return the collection of stroke points as a 2D numpy array.
@@ -76,7 +76,7 @@ class Stroke(object):
 
         return(np.array(self.points))
 
-    def getPoints(self):
+    def get_points(self):
         """getPoints
 
            Return the collection of stroke points.
@@ -91,4 +91,4 @@ class Stroke(object):
         """
 
         helper = sh.StrokeHelper()
-        return(helper.normalizePoints(self.points))
+        return(helper.normalize_points(self.points))

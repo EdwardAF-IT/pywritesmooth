@@ -27,60 +27,60 @@ class StrokeDataset(object):
     def init(self):
         log.debug("Init")
         self.strokesets = []        # L:ist of strokeset objects
-        self.strokeMatrix = []      # List of strokeset matrices
-        self.strokeAscii = []       # List of text lines
+        self.stroke_matrix = []      # List of strokeset matrices
+        self.stroke_ascii = []       # List of text lines
 
     def __init__(self):
         log.debug("Default constructor")
         self.init()
 
-    def __init__(self, inputFiles, savedPickle):
+    def __init__(self, input_files, saved_pickle):
         log.debug("Loader constructor")
         self.init()
 
-        if os.path.exists(savedPickle):
-            self.load(savedPickle)
+        if os.path.exists(saved_pickle):
+            self.load(saved_pickle)
         else:
-            self.loadRawData(inputFiles)
-            self.save(savedPickle)
+            self.load_raw_data(input_files)
+            self.save(saved_pickle)
 
-        log.debug(f"Stroke Sets: Len = {len(self.getStrokesets())}")
-        log.debug(f"Stroke Matrix: Len = {len(self.getStrokeMatrix())}, Strokes = {self.getStrokeMatrix()}")
-        log.debug(f"Ascii Matrix: Len = {len(self.getAsciiList())}, Lines = {self.getAsciiList()}")
+        log.debug(f"Stroke Sets: Len = {len(self.get_strokesets())}")
+        log.debug(f"Stroke Matrix: Len = {len(self.get_stroke_matrix())}, Strokes = {self.get_stroke_matrix()}")
+        log.debug(f"Ascii Matrix: Len = {len(self.get_ascii_list())}, Lines = {self.get_ascii_list()}")
 
     def __len__(self):
-        return(len(self.getStrokesets()))
+        return(len(self.get_strokesets()))
         
-    def loadRawData(self, inputFiles):
+    def load_raw_data(self, input_files):
         """load
 
-           inputFiles is a list of files to load.  Each file will be loaded as a strokeset.
+           input_files is a list of files to load.  Each file will be loaded as a strokeset.
            In addition, each stroke set is asked to compute itself as a numpy array.  That array
            and its corresponding ascii text is saved as lists for easy consumption by trainers.
         """
 
-        log.debug(f"Loading dataset {inputFiles}")  
+        log.debug(f"Loading dataset {input_files}")  
         print(f"Loading dataset")
 
         # Load stroke information from XML files
-        for file in inputFiles:
-            newStrokeset  = strokeset.StrokeSet(file)
-            self.strokesets.append(newStrokeset)
-            self.strokeMatrix.append(newStrokeset.asDeltaArray())
-            self.strokeAscii.append(newStrokeset.getText())
+        for file in input_files:
+            new_strokeset  = strokeset.StrokeSet(file)
+            self.strokesets.append(new_strokeset)
+            self.stroke_matrix.append(new_strokeset.as_delta_array())
+            self.stroke_ascii.append(new_strokeset.get_text())
 
-        doneMsg = "Finished parsing dataset. Imported {} lines".format(len(self.getStrokesets()))
-        print (doneMsg)
-        log.info(doneMsg)
+        done_msg = "Finished parsing dataset. Imported {} lines".format(len(self.get_strokesets()))
+        print (done_msg)
+        log.info(done_msg)
 
-    def getStrokesets(self):
+    def get_strokesets(self):
         return self.strokesets
 
-    def getStrokeMatrix(self):
-        return self.strokeMatrix
+    def get_stroke_matrix(self):
+        return self.stroke_matrix
 
-    def getAsciiList(self):
-        return self.strokeAscii
+    def get_ascii_list(self):
+        return self.stroke_ascii
 
     def save(self, pFile):
         """save
@@ -88,9 +88,9 @@ class StrokeDataset(object):
            Write the entire dataset to a Python pickle file for later retrieval.
         """
 
-        saveMsg = f"Saving data as Python pickle: {pFile}"
-        log.info(saveMsg)
-        print(saveMsg)
+        save_msg = f"Saving data as Python pickle: {pFile}"
+        log.info(save_msg)
+        print(save_msg)
         os.makedirs(os.path.dirname(pFile), exist_ok=True)
         file = open(pFile, 'wb')
         pickle.dump(self, file)
@@ -103,9 +103,9 @@ class StrokeDataset(object):
            previously saved file is much faster than reading the raw input data.
         """
 
-        loadMsg = f"Loading previously saved dataset from pickle file {pFile}"
-        log.info(loadMsg)
-        print(loadMsg)
+        load_msg = f"Loading previously saved dataset from pickle file {pFile}"
+        log.info(load_msg)
+        print(load_msg)
         file = open(pFile, 'rb')
         incoming = pickle.load(file)
         file.close()
@@ -113,9 +113,9 @@ class StrokeDataset(object):
         # The collections must be assigned individually like this since the loaded object loses scope
         # upon exiting this method.
         self.strokesets = incoming.strokesets
-        self.strokeMatrix = incoming.strokeMatrix
-        self.strokeAscii = incoming.strokeAscii
+        self.stroke_matrix = incoming.stroke_matrix
+        self.stroke_ascii = incoming.stroke_ascii
 
-        doneMsg = "Loaded {} lines for processing".format(len(self.getStrokesets()))
-        print (doneMsg)
-        log.info(doneMsg)
+        done_msg = "Loaded {} lines for processing".format(len(self.get_strokesets()))
+        print (done_msg)
+        log.info(done_msg)

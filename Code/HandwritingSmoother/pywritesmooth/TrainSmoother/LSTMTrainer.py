@@ -93,11 +93,11 @@ class LSTMTrainer(TrainerInterface):
         if not save_generated_stroke_base is None:
             self.gen_stroke_base = save_generated_stroke_base
 
-        cudaMsg = "Using CUDA" if use_cuda else "Not using CUDA"
-        print(cudaMsg)
-        log.info(cudaMsg)
+        cuda_msg = "Using CUDA" if use_cuda else "Not using CUDA"
+        print(cuda_msg)
+        log.info(cuda_msg)
 
-    def train(self, trainStrokeset, modelSaveLoc = None, hidden_size = 256, n_gaussians = 20, Kmixtures = 10, dropout = .2):
+    def train(self, train_strokeset, model_save_loc = None, hidden_size = 256, n_gaussians = 20, Kmixtures = 10, dropout = .2):
         """train
 
            A model is specified, and the trained model is loaded if one is available.  If not,
@@ -106,17 +106,17 @@ class LSTMTrainer(TrainerInterface):
         torch.cuda.empty_cache()
         model = HandwritingSynthesisModel(hidden_size, n_gaussians, Kmixtures, dropout)
 
-        modelFile = modelSaveLoc
-        if modelFile is None:
-            modelFile = self.saved_model
+        model_file = model_save_loc
+        if model_file is None:
+            model_file = self.saved_model
 
-        if os.path.exists(modelFile):  # Load model if previously saved
-            log.info(f"Loading model: {modelFile}")
-            model.load_state_dict(torch.load(modelFile))
+        if os.path.exists(model_file):  # Load model if previously saved
+            log.info(f"Loading model: {model_file}")
+            model.load_state_dict(torch.load(model_file))
         else:
             log.info(f"Training network...")
             model.eval()
-            model = self.train_network(model, trainStrokeset, modelFile, epochs = 10, generate = True)
+            model = self.train_network(model, train_strokeset, model_file, epochs = 10, generate = True)
 
         self.trained_model = model
 
@@ -366,7 +366,7 @@ class LSTMTrainer(TrainerInterface):
             pp += nn
         return pp
 
-    def gaussianMixture(self, y, pis, mu1s, mu2s, sigma1s, sigma2s, rhos):
+    def gaussian_mixture(self, y, pis, mu1s, mu2s, sigma1s, sigma2s, rhos):
         """gaussianMixture
 
            Implement the probability density of our next point given our 
@@ -398,7 +398,7 @@ with       25)
                     σ            σ                  1  2
                      1            2
 
-           The Bernouilli part from the paper is excluded here. It will be computed in the 
+           The Bernoulli part from the paper is excluded here. It will be computed in the 
            loss function.
 
            Remember the forward function of our model. gaussianMixture(...) takes for 
@@ -473,11 +473,11 @@ with       25)
         """
 
         loss1 = - torch.log(Pr + self.eps) # -> torch.Size([self.sequence_length, batch])    
-        bernouilli = torch.zeros_like(es) # -> torch.Size([self.sequence_length, batch])
+        bernoulli = torch.zeros_like(es) # -> torch.Size([self.sequence_length, batch])
     
-        bernouilli = y[:, :, 2] * es + (1 - y[:, :, 2]) * (1 - es)
+        bernoulli = y[:, :, 2] * es + (1 - y[:, :, 2]) * (1 - es)
     
-        loss2 = - torch.log(bernouilli + self.eps)
+        loss2 = - torch.log(bernoulli + self.eps)
         loss = loss1 + loss2 
         log.debug(f"loss shape {loss.shape}") # -> torch.Size([self.sequence_length, batch])  
         loss = torch.sum(loss, 0) 
@@ -485,7 +485,7 @@ with       25)
     
         return torch.mean(loss);
 
-    def train_network(self, model, trainStrokeset, modelSaveLoc, epochs = 5, generate = True):
+    def train_network(self, model, train_strokeset, model_save_loc, epochs = 5, generate = True):
         """train_network
 
            This uses an Adam optimizer with a learning rate of 0.005. The gradients are clipped 
@@ -506,7 +506,7 @@ with       25)
            into the loss function.  These 3 steps are repeated for every batch/epoch.
         """
 
-        data_loader = LSTMDataInterface(trainStrokeset, self.n_batch, self.sequence_length, 20, U_items=self.U_items) # 20 = datascale
+        data_loader = LSTMDataInterface(train_strokeset, self.n_batch, self.sequence_length, 20, U_items=self.U_items) # 20 = datascale
     
         optimizer = optim.Adam(model.parameters(), lr=0.005)
     
@@ -555,7 +555,7 @@ with       25)
                 es, pis, mu1s, mu2s, sigma1s, sigma2s, rhos = model.forward(x, c)
             
                 # Calculate probability density and loss
-                Pr = self.gaussianMixture(y, pis, mu1s, mu2s, sigma1s, sigma2s, rhos)
+                Pr = self.gaussian_mixture(y, pis, mu1s, mu2s, sigma1s, sigma2s, rhos)
                 loss = self.loss_fn(Pr,y, es)
                 log.debug(f"Pr = {Pr}, Loss = {loss}, Es = {es}, Pi_s = {pis}, Mu1_s = {mu1s}, Mu2_s = {mu2s}, Sigma1_s = {sigma1s}, Sigma2_s = {sigma2s}, Rho_s = {rhos}")
             
@@ -569,9 +569,9 @@ with       25)
             
                 # Useful infos over training
                 if batch % 10 == 0:
-                    epochMsg = f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item():.3f} took {(time.time() - start):.2f} seconds"
-                    print(epochMsg)
-                    log.info(epochMsg)
+                    epoch_msg = f"Epoch : {epoch} - step {batch}/{data_loader.num_batches} - loss {loss.item():.3f} took {(time.time() - start):.2f} seconds"
+                    print(epoch_msg)
+                    log.info(epoch_msg)
                     start = time.time()
                 
                     # Plot heatmaps every 100 batches
@@ -600,9 +600,9 @@ with       25)
             loss_epoch.append(sum(loss_batch[epoch * data_loader.num_batches : (epoch + 1)*data_loader.num_batches-1]) / data_loader.num_batches)
         
             # Save model after each epoch
-            log.info(f"Saving model after epoch {epoch} in {modelSaveLoc}")
-            os.makedirs(os.path.dirname(modelSaveLoc), exist_ok=True)
-            torch.save(model.state_dict(), modelSaveLoc)
+            log.info(f"Saving model after epoch {epoch} in {model_save_loc}")
+            os.makedirs(os.path.dirname(model_save_loc), exist_ok=True)
+            torch.save(model.state_dict(), model_save_loc)
         
         # Plot loss 
         plt.plot(time_batch, loss_batch)
@@ -614,8 +614,8 @@ with       25)
 
         return model
 
-    def asHandwriting(self, text, bias = 10):
-        """asHandwriting
+    def as_handwriting(self, text, bias = 10):
+        """as_handwriting
 
            Generate handwriting of a text string.  Input a maximum of 80 characters.
         """
@@ -636,12 +636,12 @@ with       25)
 
         # Ask the trained model to generate the stroke sequence
         sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
-        seqMsg = f"Sequence shape for text {text} = {sequence.shape}"
-        log.debug(seqMsg)
+        seq_msg = f"Sequence shape for text {text} = {sequence.shape}"
+        log.debug(seq_msg)
         self.draw_strokes(sequence, factor=0.5)
 
-    def smoothHandwriting(self, sample, bias = 10):
-        """smoothHandwriting
+    def smooth_handwriting(self, sample, bias = 10):
+        """smooth_handwriting
 
            Use the specified sample file to smooth it.  The sample must be in the IAM 
            online data format (XML) at this time.  The result will be saved to an SVG 
@@ -668,6 +668,6 @@ with       25)
 
         # Ask the trained model to generate the stroke sequence
         sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
-        seqMsg = f"Sequence shape for text smoothing = {sequence.shape}"
-        log.debug(seqMsg)
+        seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
+        log.debug(seq_msg)
         self.draw_strokes(sequence, factor=0.5)

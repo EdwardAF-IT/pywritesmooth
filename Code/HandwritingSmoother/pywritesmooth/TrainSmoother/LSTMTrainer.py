@@ -563,7 +563,7 @@ with       25)
                 optimizer.zero_grad()
                 loss.backward()
             
-                # Gradient cliping
+                # Gradient clipping
                 torch.nn.utils.clip_grad_norm_(model.parameters(), self.gradient_threshold)
                 optimizer.step()
             
@@ -578,7 +578,7 @@ with       25)
                     if batch % 100 == 0:
                         self.plot_heatmaps(s[0], model.Phis.transpose(0, 1).detach().numpy(), model.Ws.transpose(0, 1).detach().numpy())
                     
-                    # Generate a sequence every 500 batches     
+                    # Generate a sequence every 500 batches to watch as the training progresses   
                     if generate and batch % 500 == 0 :
                         x0 = torch.Tensor([0,0,1]).view(1,1,3)
 

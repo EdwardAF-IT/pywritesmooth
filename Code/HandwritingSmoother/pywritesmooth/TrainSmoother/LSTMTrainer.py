@@ -191,8 +191,11 @@ class LSTMTrainer(TrainerInterface):
 
         if self.save_generated_strokes:
             log.info(f"Saving generated stroke in {gen_stroke_save_name}")
-            dwg.save()
-            self.gen_stroke_num += 1
+            try:
+                dwg.save()
+                self.gen_stroke_num += 1
+            except:
+                log.error(f"Could not save stroke drawing", exc_info=True)
 
     def line_plot(self, strokes, title):
         """line_plot
@@ -202,11 +205,18 @@ class LSTMTrainer(TrainerInterface):
            and therefore for plotting here.
         """
 
+        # Skip check
+        if not self.save_samples and not self.display_images:
+            return  # Do nothing if user doesn't want the samples
+
         # File management
         if self.save_samples:
             hw_save_name = self.save_sample_base + r"_samples_" + str(self.hw_num) + r".png"
-            print(f"save: {hw_save_name}")
-            os.makedirs(os.path.dirname(hw_save_name), exist_ok=True)
+            log.info(f"Saving: {hw_save_name}")
+            try:
+                os.makedirs(os.path.dirname(hw_save_name), exist_ok=True)
+            except:
+                log.error(f"Could not create plot file", exc_info=True)
 
         fig = plt.figure(figsize=(20,2))
         eos_preds = np.where(strokes[:,-1] == 1)
@@ -221,12 +231,16 @@ class LSTMTrainer(TrainerInterface):
 
         if self.save_samples:
             log.info(f"Saving handwriting sample \"{title}\" in {hw_save_name}")
-            fig.savefig(hw_save_name)
-            self.hw_num += 1
+            try:
+                fig.savefig(hw_save_name)
+                self.hw_num += 1
+            except:
+                log.error(f"Could not save handwriting sample to {hw_save_name}", exc_info=True)
 
         if self.display_images:
             plt.show()
-        plt.close(fig)
+
+        plt.close('all')
 
     def show_hw_samples(self, x, s):
         """show_hw_samples
@@ -255,7 +269,13 @@ class LSTMTrainer(TrainerInterface):
         """
         # Index position 0 means "unknown"
         alphabet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-        seq = [alphabet.find(char) + 1 for char in s]
+
+        if s is None:
+            seq = [0]
+            log.debug(f"One hotting: nothing")
+        else:
+            seq = [alphabet.find(char) + 1 for char in s]
+            log.debug(f"One hotting: {s}")
 
         one_hot = np.zeros((len(s),len(alphabet)+1))
         one_hot[np.arange(len(s)),seq] = 1
@@ -289,7 +309,10 @@ class LSTMTrainer(TrainerInterface):
 
         # File management
         plot_save_name = self.save_plot_base + r"_weights_" + str(self.plot_num) + r".png"
-        os.makedirs(os.path.dirname(plot_save_name), exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(plot_save_name), exist_ok=True)
+        except:
+            log.error(f"Could not initialize plot file {plot_save_name}", exc_info=True)
 
         # Crop data array for more visually appealing plots
         def trim_empty_space(m, tol = 1e-3, r = None, c = None):
@@ -343,14 +366,17 @@ class LSTMTrainer(TrainerInterface):
         #np.savetxt(".\plot_ws.csv", plot_ws, delimiter=",")
 
         # Plot output
-        log.info(f"Saving plot {plot_save_name}")
-        fig.savefig(plot_save_name)
+        try:
+            log.info(f"Saving plot {plot_save_name}")
+            fig.savefig(plot_save_name)
+            self.plot_num += 1
+        except:
+            log.error(f"Could not save plot {}", exc_info=True)
+
         if self.display_images:
             plt.show()
-        plt.close(fig)
 
-        # Housekeeping
-        self.plot_num += 1
+        plt.close('all')
 
     def get_n_params(self, model):
         """get_n_params

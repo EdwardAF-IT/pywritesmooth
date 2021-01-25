@@ -170,6 +170,10 @@ def build_models(hw, models_to_train):
        Have each model train itself or load a trained model.
     """
 
+    if models_to_train is None:
+        log.error(f"No models available to train")
+        return
+
     for model in models_to_train:
         model.train(hw)
 
@@ -180,6 +184,14 @@ def write_text(trained_models, gen_list = ['Sample text']):
 
        Test the models available by having them generate handwriting from sample text.
     """
+
+    if trained_models is None:
+        log.error(f"A trained model is required to generate handwriting")
+        return
+
+    if gen_list is None:
+        log.error(f"No text available to write")
+        return
 
     for model in trained_models:
         for text in gen_list:
@@ -193,6 +205,15 @@ def smooth_writing(hw_sample, models):
        *generated-save* flag.
 
     """
+
+    if models is None:
+        log.error(f"At least one trained model is required to smooth handwriting")
+        return
+
+    if hw_sample is None:
+        log.error(f"A sample is required in order to smooth handwriting")
+        return
+
     for model in models:
         model.smooth_handwriting(hw_sample)  
         
@@ -201,6 +222,10 @@ def get_file_list(folder):
 
        Expand all the XML files in a folder and return the resulting list.
     """
+
+    if folder is None:
+        log.error(f"A folder is required that contains XML online data files")
+        return
 
     return [os.path.join(root, f) for root, dirs, files in os.walk(folder) for f in files]
 

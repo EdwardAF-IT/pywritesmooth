@@ -13,7 +13,7 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
 @click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
 @click.option('-ss', '--smooth-sample', type=click.STRING, help="Filename of a writing sample in online (XML) format similar to the structure of the IAM dataset")
-@click.option('-t', '--train', type=click.STRING, help = 'Image file of printed digits or letters in upper or lower case to train the model(s)')
+@click.option('-t', '--train', type=click.STRING, help = 'Image file(s) of printed digits or letters in upper or lower case to train the model(s)')
 @click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
 @click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
 @click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
@@ -82,7 +82,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 calledName = os.path.basename(__file__)  # When called as a script
                 log.debug("Running as a script")
 
-            print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
+            #print(__loader__, __name__, __package__, __spec__, __spec.parent, __file__)
             print("Usage: ", calledName, " --smooth <handwriting sample> --smooth-model <gan | lstm>  --OR--")
             print("Usage: ", calledName, " --train <handwriting sample> --train-models <gan | lstm>")
 
@@ -116,6 +116,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 log.info(f"Training model data: {train}")
                 log.info(f"Training model args: {train_models}")
                 hwInput = glob.glob(train)
+                log.debug(f"Input files: {hwInput}")
 
                 writingSample = sds.StrokeDataset(hwInput, hwDataSave)
                 models = []

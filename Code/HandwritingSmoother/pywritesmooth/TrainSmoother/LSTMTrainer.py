@@ -116,7 +116,7 @@ class LSTMTrainer(TrainerInterface):
         else:
             log.info(f"Training network...")
             model.eval()
-            model = self.train_network(model, trainStrokeset, modelFile, epochs = 2, generate = True)
+            model = self.train_network(model, trainStrokeset, modelFile, epochs = 10, generate = True)
 
         self.trained_model = model
 
@@ -205,6 +205,7 @@ class LSTMTrainer(TrainerInterface):
         # File management
         if self.save_samples:
             hw_save_name = self.save_sample_base + r"_samples_" + str(self.hw_num) + r".png"
+            print(f"save: {hw_save_name}")
             os.makedirs(os.path.dirname(hw_save_name), exist_ok=True)
 
         fig = plt.figure(figsize=(20,2))

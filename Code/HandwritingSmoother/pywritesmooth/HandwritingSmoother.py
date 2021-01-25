@@ -119,7 +119,8 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 log.debug(f"Input files: {hw_input}")
 
                 # Get base from cl args to be os independent
-                print(train[:train.lower().find("data")])
+                os_base = train[:train.lower().find("data")]
+                hw_save_gen_base = os.path.join(os_base, "strokes", "gen_stroke") if not os_base is None else os.path.join(".", "strokes", "gen_stroke")
 
                 writing_sample = sds.StrokeDataset(hw_input, hw_data_save)
                 models = []
@@ -128,7 +129,8 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                     if model_name == 'lstm':
                         models.append(lstm.LSTMTrainer(hw_model_save, image_display, 
                                                        hw_plot_images, handwriting_save, 
-                                                       hw_save_samples, generated_save))
+                                                       hw_save_samples, generated_save,
+                                                       hw_save_gen_base))
                     if model_name == 'gan':
                         models.append(gan.GANTrainer())
 

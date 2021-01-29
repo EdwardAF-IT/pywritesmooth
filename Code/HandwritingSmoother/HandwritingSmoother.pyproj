@@ -14,7 +14,7 @@
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
     <TestFramework>Pytest</TestFramework>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>-m ".\saves\hwSynthesis.model" -p ".\saves\hwData.pkl" -l ".\logs\pywritesmooth.log" -ll "debug" -is ".\plots\heatmap" -hws ".\samples\hw" -gs -s -ss "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml"</CommandLineArguments>
+    <CommandLineArguments>-t "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes" --train-models=lstm -m ".\saves\hwSynthesis.model" -p ".\saves\hwData.pkl" -l ".\logs\pywritesmooth.log" -ll "debug" -is ".\plots\heatmap" -hws ".\samples\hw" -gs -tm -w "Hello" -s -ss "C:\Code\SMU\Capstone\Data\IAM Original\lineStrokes-all\lineStrokes\a01\a01-000\a01-000u-01.xml"</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -29,7 +29,6 @@
     <Compile Include="pywritesmooth\Data\LSTMDataInterface.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pywritesmooth\Data\StrokeDataModule.py" />
     <Compile Include="pywritesmooth\Data\StrokeDataset.py" />
     <Compile Include="pywritesmooth\Data\__init__.py" />
     <Compile Include="pywritesmooth\TrainSmoother\HandwritingSynthesisModel.py">
@@ -43,12 +42,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pywritesmooth\HandwritingSmoother.py" />
-    <Compile Include="pywritesmooth\Smooth\Smoother.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="pywritesmooth\Smooth\__init__.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="pywritesmooth\TrainSmoother\GANTrainer.py">
       <SubType>Code</SubType>
     </Compile>
@@ -71,7 +64,6 @@
   <ItemGroup>
     <Folder Include="pywritesmooth\" />
     <Folder Include="pywritesmooth\Data\" />
-    <Folder Include="pywritesmooth\Smooth\" />
     <Folder Include="pywritesmooth\TrainSmoother\" />
     <Folder Include="pywritesmooth\Utility\" />
   </ItemGroup>

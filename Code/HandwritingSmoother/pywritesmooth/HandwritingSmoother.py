@@ -3,7 +3,6 @@ import sys, os, click, glob, platform, logging as log
 from logging.handlers import RotatingFileHandler
 
 # Project
-import pywritesmooth.Smooth.Smoother as sm
 import pywritesmooth.TrainSmoother.LSTMTrainer as lstm
 import pywritesmooth.TrainSmoother.GANTrainer as gan
 import pywritesmooth.Data.Stroke as stroke

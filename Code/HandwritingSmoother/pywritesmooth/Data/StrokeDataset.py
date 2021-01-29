@@ -34,15 +34,17 @@ class StrokeDataset(object):
         log.debug("Default constructor")
         self.init()
 
-    def __init__(self, input_files, saved_pickle):
-        log.debug("Loader constructor")
+    def __init__(self, input_files, saved_pickle = None):
         self.init()
 
-        if os.path.exists(saved_pickle):
-            self.load(saved_pickle)
+        if not saved_pickle is None:    # Only load/save if a filename is provided
+            if os.path.exists(saved_pickle):
+                self.load(saved_pickle)
+            else:
+                self.load_raw_data(input_files)
+                self.save(saved_pickle)
         else:
             self.load_raw_data(input_files)
-            self.save(saved_pickle)
 
         log.debug(f"Stroke Sets: Len = {len(self.get_strokesets())}")
         log.debug(f"Stroke Matrix: Len = {len(self.get_stroke_matrix())}, Strokes = {self.get_stroke_matrix()}")

@@ -38,7 +38,7 @@ class StrokeHelper(object):
         filled_len = int(round(bar_len * count / float(total)))
 
         percents = round(100.0 * count / float(total), 1)
-        percents = 100.0 if percents > 99.5 else percents       # Show 100% if complete
+        percents = 100.0 if bar_len - filled_len == 0 else percents       # Show 100% if complete
         bar = '=' * filled_len + '-' * (bar_len - filled_len)
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))

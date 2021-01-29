@@ -134,6 +134,7 @@ dmypy.json
 *.mp3
 *.mov
 *.log
+*.log.*
 *.pkl
 *.png
 *.jpg

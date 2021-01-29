@@ -1,5 +1,6 @@
 # Basics    
 import sys, os, click, glob, logging as log
+from logging.handlers import RotatingFileHandler
 
 # Project
 import pywritesmooth.Smooth.Smoother as sm
@@ -10,11 +11,12 @@ import pywritesmooth.Data.StrokeSet as strokeset
 import pywritesmooth.Data.StrokeDataset as sds
 
 @click.command()
-@click.option('-s', '--smooth', type=click.File('rb'), help = 'Image file of printed digits or letters in upper or lower case to be smoothed')
+@click.option('-s', '--smooth', is_flag=True, help = 'Flag to try smoothing a sample; requires smooth-model and smooth-sample')
 @click.option('-sm', '--smooth-model', default = 'lstm', type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Preferred smoothing model, options are GAN or LSTM')
 @click.option('-ss', '--smooth-sample', type=click.STRING, help="Filename of a writing sample in online (XML) format similar to the structure of the IAM dataset")
 @click.option('-t', '--train', type=click.STRING, help = 'Folder that contains image file(s) of printed digits or letters in upper or lower case to train the model(s)')
-@click.option('-tm', '--train-models', multiple=True, type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
+@click.option('-tm', '--train-models', multiple=True, default=['lstm'], type=click.Choice(['gan', 'lstm'], case_sensitive=False), help = 'Models to be trained, options are GAN or LSTM')
+@click.option('-e', '--epoch', default = 10, type=click.IntRange(min = 0), help = r"Number of epochs to run when training; default 10")
 @click.option('-m', '--saved-model', type=click.STRING, help = 'Filename of a HandwritingSynthesisModel for saving/loading')
 @click.option('-p', '--pickled-data', type=click.STRING, help = 'Filename of a StrokeDataset for saving/loading in Python pickle format')
 @click.option('-l', '--log-file', type=click.STRING, help = 'Filename of the log file')
@@ -26,9 +28,10 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
 @click.option('-w', '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
 @click.option('-tm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
-def main(smooth = None, smooth_model = None, train = None, train_models = None, saved_model = None, pickled_data = None, 
-         log_file = None, log_level = None, image_save = None, image_display = False, hw_save = None, 
-         handwriting_save  = False, generated_save = False, write = None, test_model = False, smooth_sample = None):
+def main(smooth = False, smooth_model = None, smooth_sample = None, train = None, train_models = None, epoch = None,
+         saved_model = None, pickled_data = None, log_file = None, log_level = None, image_save = None, 
+         image_display = False, hw_save = None, handwriting_save  = False, generated_save = False, write = None, 
+         test_model = False):
     """The main routine.
     
     
@@ -51,6 +54,7 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
     # Constants
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
+    LOG_MAX_BYTES = 104857600  #100 MB
 
     try:
         # Default log file
@@ -69,7 +73,8 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                             log.DEBUG if ll == 'debug' else \
                             log.INFO
 
-        log.basicConfig(filename=hw_log_file, level=logging_level, 
+        log.basicConfig(handlers=[RotatingFileHandler(hw_log_file, maxBytes=LOG_MAX_BYTES, backupCount=100)], 
+                        level=logging_level, 
                         format=r'%(asctime)s %(levelname)s (%(filename)s/%(funcName)s:%(lineno)d): %(message)s', 
                         datefmt='%d-%b-%y %H:%M:%S')
         log.debug("Starting app")
@@ -107,8 +112,9 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
             hw_save_samples = hw_save
 
         # Train models of interest
+        models = []
         if not train is None:
-            if train_models is None:
+            if not train_models:
                 print("Please specify --train-models <model> switch when using --train")
                 log.critical("Training switch missing or incorrect; exiting")
                 return EXIT_FAILURE
@@ -122,25 +128,27 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 os_base = train[:train.lower().find("data")]
                 hw_save_gen_base = os.path.join(os_base, "strokes", "gen_stroke") if not os_base is None else os.path.join(".", "strokes", "gen_stroke")
 
-                writing_sample = sds.StrokeDataset(hw_input, hw_data_save)
-                models = []
+                writing_samples = sds.StrokeDataset(hw_input, hw_data_save)
+                models = create_model_list(train_models, hw_model_save, 
+                                           image_display, hw_plot_images, 
+                                           handwriting_save, hw_save_samples, 
+                                           generated_save, hw_save_gen_base, 
+                                           epoch)
 
-                for model_name in train_models:
-                    if model_name == 'lstm':
-                        models.append(lstm.LSTMTrainer(hw_model_save, image_display, 
-                                                       hw_plot_images, handwriting_save, 
-                                                       hw_save_samples, generated_save,
-                                                       hw_save_gen_base))
-                    if model_name == 'gan':
-                        models.append(gan.GANTrainer())
-
-                models = build_models(writing_sample, models)
+                if not models:
+                    log.error(f"No models have been loaded or trained; exiting")
+                    return EXIT_FAILURE
+                else:
+                    models = build_models(writing_samples, models)
 
                 if test_model:
+                    msg = f"Testing model"
+                    print(msg)
+                    log.info(msg)
                     write_text(models)
 
         # Smooth handwriting sample provided by the user
-        if not smooth is None:
+        if smooth:
             if smooth_model is None:
                 print(r"Please specify --smooth_model <gan | ltsm> switch when using --smooth")
                 log.critical(r"Smoothing switch missing or incorrect; exiting")
@@ -150,11 +158,45 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
                 log.critical(r"Smoothing sample missing or incorrect; exiting")
                 return EXIT_FAILURE
             else:
+                if models is None or not models: # Load the models if they weren't previously
+                    # Get base from cl args to be os independent
+                    os_base = smooth_sample[:smooth_sample.lower().find("data")]
+                    hw_save_gen_base = os.path.join(os_base, "strokes", "smoothed_stroke") if not os_base is None else os.path.join(".", "strokes", "smoothed_stroke")
+
+                    models = create_model_list([smooth_model], hw_model_save, 
+                                               image_display, hw_plot_images, 
+                                               handwriting_save, hw_save_samples, 
+                                               generated_save, hw_save_gen_base,
+                                               epoch)
+                    if not models:
+                        log.error(f"No models have been loaded or trained; exiting")
+                        return EXIT_FAILURE
+
+                models = load_models(models, hw_model_save)
+                writing_sample = sds.StrokeDataset(get_file_list(smooth_sample))
                 log.info(f"Smoothing models selected: {smooth_model}")
-                smooth_writing(smooth_sample, models)
+                smooth_writing(writing_sample, models)
 
         # Generate handwritten text supplied by user
-        if not write is None:
+        if write:
+            if models is None or not models: # Load the models if they weren't previously
+                # Get base from cl args to be os independent
+                path = train if train else smooth_sample if smooth_sample else os.path.join(".", "data")
+                os_base = path[:path.lower().find("data")]
+                hw_save_gen_base = os.path.join(os_base, "strokes", "gen_stroke") if not os_base is None else os.path.join(".", "strokes", "gen_stroke")
+
+                models = create_model_list([smooth_model], hw_model_save, 
+                                            image_display, hw_plot_images, 
+                                            handwriting_save, hw_save_samples, 
+                                            generated_save, hw_save_gen_base,
+                                            epoch)
+                if not models:
+                    log.error(f"No models have been loaded or trained; exiting")
+                    return EXIT_FAILURE
+
+            models = load_models(models, hw_model_save)
+
+            log.info(f"Smoothing models selected: {smooth_model}")
             write_text(models, write)
 
     except NotImplementedError as nie:
@@ -168,6 +210,46 @@ def main(smooth = None, smooth_model = None, train = None, train_models = None, 
 
     log.info("Exiting normally")
     return EXIT_SUCCESS
+
+def create_model_list(model_names, hw_model_save, image_display, hw_plot_images, handwriting_save, hw_save_samples, generated_save, hw_save_gen_base, epochs = 10):
+    """create_model_list
+
+       Instantiate models of type TrainerInterface for any that are listed in the 
+       model_names parameter.  If none are loaded, an empty list is returned.
+    """
+    models = []
+
+    for model_name in model_names:
+        if model_name == 'lstm':
+            msg = f"Using model: LSTM"
+            print(msg)
+            log.info(msg)
+            models.append(lstm.LSTMTrainer(hw_model_save, image_display, 
+                                            hw_plot_images, handwriting_save, 
+                                            hw_save_samples, generated_save,
+                                            hw_save_gen_base, epochs))
+        if model_name == 'gan':
+            msg = f"Using model: GAN"
+            print(msg)
+            log.info(msg)
+            models.append(gan.GANTrainer())
+
+    return models
+
+def load_models(models, saved_model):
+    """load_models
+
+       Direct models to load themselves.
+    """
+
+    if models is None:
+        log.error(f"No models available to load")
+        return None
+
+    for model in models:
+        model.load(saved_model)
+
+    return models
 
 def build_models(hw, models_to_train):
     """BuildModels
@@ -198,8 +280,10 @@ def write_text(trained_models, gen_list = ['Sample text']):
         log.error(f"No text available to write")
         return
 
+    to_write = [gen_list] if type(gen_list) == str else gen_list  # Generator expects a list
+
     for model in trained_models:
-        for text in gen_list:
+        for text in to_write:
             model.as_handwriting(text)
 
 def smooth_writing(hw_sample, models):
@@ -232,7 +316,12 @@ def get_file_list(folder):
         log.error(f"A folder is required that contains XML online data files")
         return
 
-    return [os.path.join(root, f) for root, dirs, files in os.walk(folder) for f in files]
+    if os.path.isdir(folder):
+        return [os.path.join(root, f) for root, dirs, files in os.walk(folder) for f in files]
+    elif os.path.isfile(folder):
+        return [folder]
+    else:
+        return []
 
 if __name__ == "__main__":
     sys.exit(main())

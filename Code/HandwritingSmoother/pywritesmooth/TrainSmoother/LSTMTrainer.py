@@ -69,16 +69,21 @@ class LSTMTrainer(TrainerInterface):
         self.n_layers = 3
         self.n_gaussians = 20
         self.Kmixtures = 10
+        self.trained_model = None
 
         # Hyperparameters
         self.gradient_threshold = 10
         self.dropout = 0.2
+        self.epoch = 10
 
     def __init__(self, saved_model = None, display_images = False, save_plot_base = None,
                  save_samples = False, save_sample_base = None, 
-                 save_generated_strokes = False, save_generated_stroke_base = None):
+                 save_generated_strokes = False, save_generated_stroke_base = None,
+                 epoch = 10):
         log.debug("In ltsm con")
         self.init()
+        
+        self.epoch = epoch
 
         self.display_images = display_images
         if not save_plot_base is None:
@@ -103,22 +108,55 @@ class LSTMTrainer(TrainerInterface):
            A model is specified, and the trained model is loaded if one is available.  If not,
            then the model is trained, and the resulting model is saved for future use.
         """
+        model = None
+
+        model_file = model_save_loc
+        if model_file is None:
+            model_file = self.saved_model
+
+        if not model_file is None:
+            model = self.load(model_file)
+
+        if model is None:
+            torch.cuda.empty_cache()
+            model = HandwritingSynthesisModel(hidden_size, n_gaussians, Kmixtures, dropout)
+
+            log.info(f"Training network...")
+            model.eval()
+            model = self.train_network(model, train_strokeset, model_file, epochs = self.epoch, generate = True)
+
+            self.trained_model = model
+
+    def load(self, model_save_loc = None):
+        """load
+
+           Load a trained model is loaded if one is available. Either the loaded model or
+           None is returned.
+        """
+        if not self.trained_model is None:
+            return  # Model is already loaded
+
         torch.cuda.empty_cache()
-        model = HandwritingSynthesisModel(hidden_size, n_gaussians, Kmixtures, dropout)
+        model = HandwritingSynthesisModel()
 
         model_file = model_save_loc
         if model_file is None:
             model_file = self.saved_model
 
         if os.path.exists(model_file):  # Load model if previously saved
-            log.info(f"Loading model: {model_file}")
-            model.load_state_dict(torch.load(model_file))
+            load_msg = f"Loading previously saved model file: {model_file}"
+            log.info(load_msg)
+            print(load_msg)
+            try:
+                model.load_state_dict(torch.load(model_file))
+                self.trained_model = model
+                return model
+            except:
+                log.error(f"Error loading saved model {model_file}")
+                return None
         else:
-            log.info(f"Training network...")
-            model.eval()
-            model = self.train_network(model, train_strokeset, model_file, epochs = 10, generate = True)
-
-        self.trained_model = model
+            log.info(f"Could not load saved model file {model_file}")
+            return None
 
     def get_bounds(self, data, factor):
         """get_bounds
@@ -144,7 +182,7 @@ class LSTMTrainer(TrainerInterface):
 
         return (min_x, max_x, min_y, max_y)
 
-    def draw_strokes(self, data, factor=10):
+    def draw_strokes(self, data, factor=10, show_save_loc = False):
         """draw_strokes
 
            Using the array format of the stroke data, draw the handwriting sample
@@ -190,7 +228,11 @@ class LSTMTrainer(TrainerInterface):
         dwg.add(dwg.path(p).stroke(the_color, stroke_width).fill("none"))
 
         if self.save_generated_strokes:
-            log.info(f"Saving generated stroke in {gen_stroke_save_name}")
+            msg = f"Saving generated stroke in {gen_stroke_save_name}"
+            log.info(msg)
+            if show_save_loc:
+                print(msg)
+
             try:
                 dwg.save()
                 self.gen_stroke_num += 1
@@ -553,6 +595,10 @@ with       25)
         loss_epoch = []
     
         # Loop over epochs
+        epoch_msg = f"Training over {epochs} epochs"
+        print(epoch_msg)
+        log.info(epoch_msg)
+
         for epoch in range(epochs):
             log.info(f"Processing epoch {epoch}")
             data_loader.reset_batch_pointer()
@@ -616,6 +662,7 @@ with       25)
                             seqMsg = f"Sequence shape = {sequence.shape}"
                             log.debug(seqMsg)
                             self.draw_strokes(sequence, factor=0.5)
+                        print()   # Line return
                     
                 # Save loss per batch
                 time_batch.append(epoch + batch / data_loader.num_batches)
@@ -649,6 +696,10 @@ with       25)
         assert len(text) <= 80   # Restrict the length for performance; don't want to gen from a book!
         assert not self.trained_model is None  # Must have a trained model first to work!!
 
+        msg = f"Generating handwriting from text \"{text}\""
+        print(msg)
+        log.info(msg)
+
         # c is the text to generate
         c0 = np.float32(self.one_hot(text))
         c0 = torch.from_numpy(c0) 
@@ -662,9 +713,10 @@ with       25)
 
         # Ask the trained model to generate the stroke sequence
         sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
+        print()
         seq_msg = f"Sequence shape for text {text} = {sequence.shape}"
         log.debug(seq_msg)
-        self.draw_strokes(sequence, factor=0.5)
+        self.draw_strokes(sequence, factor=0.5, show_save_loc = True)
 
     def smooth_handwriting(self, sample, bias = 10):
         """smooth_handwriting
@@ -681,6 +733,12 @@ with       25)
 
         assert not self.trained_model is None  # Must have a trained model first to work!!
 
+        msg = f"Smoothing for text \"{sample.get_ascii_list()[0]}\""
+        print(msg)
+        log.info(msg)
+        sample = LSTMDataInterface(sample)
+        return  # TODO: delete
+
         # c is the text to generate  TODO: is c0 even necessary here?
         c0 = np.float32(self.one_hot(text))
         c0 = torch.from_numpy(c0) 
@@ -694,6 +752,7 @@ with       25)
 
         # Ask the trained model to generate the stroke sequence
         sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
+        print()
         seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
         log.debug(seq_msg)
-        self.draw_strokes(sequence, factor=0.5)
+        self.draw_strokes(sequence, factor=0.5, show_save_loc = True)

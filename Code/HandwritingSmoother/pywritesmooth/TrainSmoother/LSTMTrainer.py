@@ -1,5 +1,5 @@
 # Basics
-import os, time, svgwrite, numpy as np, logging as log
+import os, time, svgwrite, platform, numpy as np, logging as log
 
 # Project
 from .TrainerInterface import TrainerInterface
@@ -16,6 +16,8 @@ use_cuda = torch.cuda.is_available()
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from IPython.display import display, SVG
+print(platform.system())
+is_linux = True if platform.system().lower() == 'linux' else False
 
 class LSTMTrainer(TrainerInterface):
     """LSTMTrainer
@@ -251,6 +253,9 @@ class LSTMTrainer(TrainerInterface):
         if not self.save_samples and not self.display_images:
             return  # Do nothing if user doesn't want the samples
 
+        if is_linux:
+            matplotlib.use('Agg')  # Non-interactive backend
+
         # File management
         if self.save_samples:
             hw_save_name = self.save_sample_base + r"_samples_" + str(self.hw_num) + r".png"
@@ -355,6 +360,9 @@ class LSTMTrainer(TrainerInterface):
             os.makedirs(os.path.dirname(plot_save_name), exist_ok=True)
         except:
             log.error(f"Could not initialize plot file {plot_save_name}", exc_info=True)
+
+        if is_linux:
+            matplotlib.use('Agg')  # Non-interactive backend
 
         # Crop data array for more visually appealing plots
         def trim_empty_space(m, tol = 1e-3, r = None, c = None):
@@ -573,6 +581,9 @@ with       25)
            Gaussian mixture probabilities.  Once computed, that probability is then fed
            into the loss function.  These 3 steps are repeated for every batch/epoch.
         """
+
+        if is_linux:
+            matplotlib.use('Agg')  # Non-interactive backend
 
         data_loader = LSTMDataInterface(train_strokeset, self.n_batch, self.sequence_length, 20, U_items=self.U_items) # 20 = datascale
     

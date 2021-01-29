@@ -1,5 +1,5 @@
 # Basics    
-import sys, os, click, glob, logging as log
+import sys, os, click, glob, platform, logging as log
 from logging.handlers import RotatingFileHandler
 
 # Project
@@ -316,16 +316,9 @@ def get_file_list(folder):
         log.error(f"A folder is required that contains XML online data files")
         return
 
-    log.debug(f"File list path: {folder}")
-
     if os.path.isdir(folder):
-        for root, dirs, files in os.walk(folder):
-            for f in files:
-                log.debug(f"Root: {root}, File: {f}")
-
         return [os.path.join(root, f) for root, dirs, files in os.walk(folder) for f in files]
     elif os.path.isfile(folder):
-        log.debug(f"Filename: {folder}")
         return [folder]
     else:
         return []

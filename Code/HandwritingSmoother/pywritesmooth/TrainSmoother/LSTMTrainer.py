@@ -15,8 +15,8 @@ use_cuda = torch.cuda.is_available()
 # Plotting
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib
 from IPython.display import display, SVG
-print(platform.system())
 is_linux = True if platform.system().lower() == 'linux' else False
 
 class LSTMTrainer(TrainerInterface):

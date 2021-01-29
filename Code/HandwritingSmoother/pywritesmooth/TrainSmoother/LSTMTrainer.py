@@ -733,6 +733,7 @@ with       25)
 
         assert not self.trained_model is None  # Must have a trained model first to work!!
 
+        log.debug(f"ASCII List: {sample.get_ascii_list()}")
         msg = f"Smoothing for text \"{sample.get_ascii_list()[0]}\""
         print(msg)
         log.info(msg)

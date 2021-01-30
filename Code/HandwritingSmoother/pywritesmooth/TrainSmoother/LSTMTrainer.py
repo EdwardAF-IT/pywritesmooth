@@ -150,11 +150,17 @@ class LSTMTrainer(TrainerInterface):
             log.info(load_msg)
             print(load_msg)
             try:
-                model.load_state_dict(torch.load(model_file))
+                if not use_cuda:
+                    model.load_state_dict(torch.load(model_file, map_location=torch.device('cpu')))
+                else:
+                    model.load_state_dict(torch.load(model_file))
+
                 self.trained_model = model
                 return model
             except:
-                log.error(f"Error loading saved model {model_file}")
+                msg = f"Error loading saved model {model_file}"
+                log.error(msg, exc_info=True)
+                print(msg)
                 return None
         else:
             log.info(f"Could not load saved model file {model_file}")
@@ -184,8 +190,38 @@ class LSTMTrainer(TrainerInterface):
 
         return (min_x, max_x, min_y, max_y)
 
-    def draw_strokes(self, data, factor=10, show_save_loc = False):
-        """draw_strokes
+    def get_stroke_path(self, data, factor = 10, offset_x = 0, offset_y = 0):
+        """get_stroke_path
+
+           Get the path of a stroke sample in the SVG API format for 
+           given data.
+        """
+        min_x, max_x, min_y, max_y = self.get_bounds(data, factor)
+
+        lift_pen = 1
+
+        abs_x = offset_x + 25 - min_x
+        abs_y = offset_y + 25 - min_y
+        p = "M%s,%s " % (abs_x, abs_y)
+
+        command = "m"
+
+        for i in range(len(data)):
+            if (lift_pen == 1):
+                command = "m"
+            elif (command != "l"):
+                command = "l"
+            else:
+                command = ""
+            x = float(data[i, 0]) / factor
+            y = float(data[i, 1]) / factor
+            lift_pen = data[i, 2]
+            p += command + str(x) + "," + str(y) + " "
+
+        return p
+
+    def save_generated_stroke(self, data, factor=10, show_save_loc = False):
+        """save_generated_stroke
 
            Using the array format of the stroke data, draw the handwriting sample
            and optionally save it to a file for viewing.
@@ -204,30 +240,78 @@ class LSTMTrainer(TrainerInterface):
         dwg = svgwrite.Drawing(gen_stroke_save_name, size=dims)
         dwg.add(dwg.rect(insert=(0, 0), size=dims, fill='white'))
 
-        lift_pen = 1
+        the_color = "black"
+        stroke_width = 1
 
-        abs_x = 25 - min_x
-        abs_y = 25 - min_y
-        p = "M%s,%s " % (abs_x, abs_y)
+        dwg.add(dwg.path(self.get_stroke_path(data, factor)).stroke(the_color, stroke_width).fill("none"))
 
-        command = "m"
+        if self.save_generated_strokes:
+            msg = f"Saving generated stroke in {gen_stroke_save_name}"
+            log.info(msg)
+            if show_save_loc:
+                print(msg)
 
-        for i in range(len(data)):
-            if (lift_pen == 1):
-                command = "m"
-            elif (command != "l"):
-                command = "l"
-            else:
-                command = ""
-            x = float(data[i, 0]) / factor
-            y = float(data[i, 1]) / factor
-            lift_pen = data[i, 2]
-            p += command + str(x) + "," + str(y) + " "
+            try:
+                dwg.save()
+                self.gen_stroke_num += 1
+            except:
+                log.error(f"Could not save stroke drawing", exc_info=True)
+
+    def save_generated_stroke_biases(self, strokes, factor=10, show_save_loc = False, biases = [0., .1, .5, 2, 5, 10]):
+        """save_generated_stroke_biases
+
+           Using the array format of the stroke data, draw the handwriting sample
+           and optionally save it to a file for viewing.  In this variation of
+           stroke generation, in place of a single sample, multiple samples
+           are generated using all the biases in the parameter list for
+           easy visual comparison.
+        """
+        # File management
+        if self.save_generated_strokes:
+            gen_stroke_save_name = self.gen_stroke_base + r"_sample_with_biases_" + str(self.gen_stroke_num) + r".svg"
+            os.makedirs(os.path.dirname(gen_stroke_save_name), exist_ok=True)
+        else:
+            return  # If we aren't saving the strokes, then don't bother with the rest
+
+        # Find total size of canvas that the drawing will need
+        tot_x = 0
+        tot_y = 0
+        for stroke in strokes:
+            min_x, max_x, min_y, max_y = self.get_bounds(stroke, factor)
+            tot_x += 50 + max_x - min_x
+            tot_y += 50 + max_y - min_y
+
+        dims_total = (tot_x, tot_y)
+
+        # Create the drawing cavas
+        dwg = svgwrite.Drawing(gen_stroke_save_name, size=dims_total)
+        dwg.add(dwg.rect(insert=(0, 0), size=dims_total, fill='white'))
 
         the_color = "black"
         stroke_width = 1
 
-        dwg.add(dwg.path(p).stroke(the_color, stroke_width).fill("none"))
+        # Draw the strokes and their biases
+        offset_x = 50   # Offset x for stroke
+        offset_y = 0    # Offset y for stroke
+        text_x = 10     # Starting x point for text
+        text_y = 0      # Starting y point for text
+        for i in range(len(biases)):
+            # Get dimensions for current stroke
+            stroke = strokes[i]
+            min_x, max_x, min_y, max_y = self.get_bounds(stroke, factor)
+            dims = (50 + max_x - min_x, 50 + max_y - min_y)
+
+            # Write the bias size
+            bias = biases[i]
+            text_y = offset_y + dims[1]/2  # y point for text
+            dwg.add(dwg.text(f"{bias}", insert=(text_x, text_y), font_size="15px"))
+
+            # Draw current stroke
+            dwg.add(dwg.path(self.get_stroke_path(stroke, factor, offset_x, offset_y)).stroke(the_color, stroke_width).fill("none"))
+            
+            # Update offsets
+            offset_x += 0        # Align to the left
+            offset_y += dims[1]  # Down to next row
 
         if self.save_generated_strokes:
             msg = f"Saving generated stroke in {gen_stroke_save_name}"
@@ -672,7 +756,7 @@ with       25)
                             sequence = model.generate_sequence(x0, c0, bias = 10)
                             seqMsg = f"Sequence shape = {sequence.shape}"
                             log.debug(seqMsg)
-                            self.draw_strokes(sequence, factor=0.5)
+                            self.save_generated_stroke(sequence, factor=0.5)
                         print()   # Line return
                     
                 # Save loss per batch
@@ -698,7 +782,7 @@ with       25)
 
         return model
 
-    def as_handwriting(self, text, bias = 10):
+    def as_handwriting(self, text, bias = 10, show_biases = False):
         """as_handwriting
 
            Generate handwriting of a text string.  Input a maximum of 80 characters.
@@ -723,11 +807,21 @@ with       25)
             x0 = x0.cuda()
 
         # Ask the trained model to generate the stroke sequence
-        sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
-        print()
-        seq_msg = f"Sequence shape for text {text} = {sequence.shape}"
-        log.debug(seq_msg)
-        self.draw_strokes(sequence, factor=0.5, show_save_loc = True)
+        if show_biases:
+            biases = [0., .1, .5, 2, 5, 10]
+            sequences = []
+
+            for bias in biases:
+                sequences.append(self.trained_model.generate_sequence(x0, c0, bias))
+                print()
+            
+            self.save_generated_stroke_biases(sequences, factor = 0.5, biases = biases)
+        else:
+            sequence = self.trained_model.generate_sequence(x0, c0, bias)
+            print()
+            seq_msg = f"Sequence shape for text {text} = {sequence.shape}"
+            log.debug(seq_msg)
+            self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)
 
     def smooth_handwriting(self, sample, bias = 10):
         """smooth_handwriting
@@ -767,4 +861,4 @@ with       25)
         print()
         seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
         log.debug(seq_msg)
-        self.draw_strokes(sequence, factor=0.5, show_save_loc = True)
+        self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)

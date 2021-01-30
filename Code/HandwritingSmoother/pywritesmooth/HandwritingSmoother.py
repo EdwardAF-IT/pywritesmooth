@@ -196,7 +196,7 @@ def main(smooth = False, smooth_model = None, smooth_sample = None, train = None
             models = load_models(models, hw_model_save)
 
             log.info(f"Smoothing models selected: {smooth_model}")
-            write_text(models, write)
+            write_text(models, write, show_biases = True)
 
     except NotImplementedError as nie:
         print("Ran into some code that needs implementation: ", nie)
@@ -265,7 +265,7 @@ def build_models(hw, models_to_train):
 
     return models_to_train
 
-def write_text(trained_models, gen_list = ['Sample text']):
+def write_text(trained_models, gen_list = ['Sample text'], show_biases = False):
     """WriteText
 
        Test the models available by having them generate handwriting from sample text.
@@ -283,7 +283,7 @@ def write_text(trained_models, gen_list = ['Sample text']):
 
     for model in trained_models:
         for text in to_write:
-            model.as_handwriting(text)
+            model.as_handwriting(text, show_biases = show_biases)
 
 def smooth_writing(hw_sample, models):
     """SmoothWriting

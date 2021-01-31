@@ -824,7 +824,7 @@ with       25)
             log.debug(seq_msg)
             self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)
 
-    def smooth_handwriting(self, sample, bias = 10):
+    def smooth_handwriting(self, sample, bias = 10, show_biases = False):
         """smooth_handwriting
 
            Use the specified sample file to smooth it.  The sample must be in the IAM 
@@ -839,27 +839,53 @@ with       25)
 
         assert not self.trained_model is None  # Must have a trained model first to work!!
 
-        log.debug(f"ASCII List: {sample.get_ascii_list()}")
-        msg = f"Smoothing for text \"{sample.get_ascii_list()[0]}\""
+        sample = LSTMDataInterface(sample)
+        msg = f"Smoothing for text \"{sample.ascii_data[0]}\""
         print(msg)
         log.info(msg)
-        sample = LSTMDataInterface(sample)
-        return  # TODO: delete
 
-        # c is the text to generate  TODO: is c0 even necessary here?
-        c0 = np.float32(self.one_hot(text))
+        # c is the text to generate
+        text = sample.ascii_data[0]
+        c0 = np.float32(self.one_hot(' '*len(text) + text))
         c0 = torch.from_numpy(c0) 
         c0 = torch.unsqueeze(c0, 0)
 
-        # Starting sample TODO: assign x0 the sample stroke data
+        # Starting sample
         x0 = torch.Tensor([0,0,1]).view(1,1,3)
+        prime0 = self.build_priming_sequence(x0, sample.stroke_data[0])
 
         if use_cuda:
             x0 = x0.cuda()
+            prime0 = prime0.cuda()
 
         # Ask the trained model to generate the stroke sequence
-        sequence = self.trained_model.generate_sequence(x0, c0, bias = 10)
-        print()
-        seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
-        log.debug(seq_msg)
-        self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)
+        if show_biases:
+            biases = [0., .1, .5, 2, 5, 10]
+            sequences = []
+
+            for bias in biases:
+                sequences.append(self.trained_model.generate_sequence(x0, c0, bias, prime0))
+                #print()
+            
+            self.save_generated_stroke_biases(sequences, factor = 0.5, biases = biases)
+        else:
+            sequence = self.trained_model.generate_sequence(x0, c0, bias, prime0)
+            print()
+            seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
+            log.debug(seq_msg)
+            self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)
+
+    def build_priming_sequence(self, x0, data):
+        sequence = x0
+        sample = x0
+
+        for i in range(len(data)):
+            sample = torch.zeros_like(x0) # torch.Size([1, 1, 3])
+            d = torch.from_numpy(data[i])
+            sample[0, 0, 0] = d[0]
+            sample[0, 0, 1] = d[1]
+            sample[0, 0, 2] = d[2]
+            
+            sequence = torch.cat((sequence, sample), 0) # torch.Size([sequence_length, 1, 3])
+
+        return sequence

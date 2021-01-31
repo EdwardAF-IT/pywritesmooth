@@ -388,7 +388,7 @@ class HandwritingSynthesisModel(nn.Module):
         x = np.float32(np.random.multivariate_normal(mean, cov, 1))
         return torch.from_numpy(x)
         
-    def generate_sequence(self, x0, c0, bias):
+    def generate_sequence(self, x0, c0, bias, prime_sequence = None):
         """generate_sequence
 
            The goal of this function is to return a sequence based on either a single point or 
@@ -406,9 +406,11 @@ class HandwritingSynthesisModel(nn.Module):
            lines and keeps the forward function cleaner.
         """
 
-        sequence = x0
+        use_prime = False if prime_sequence is None else True
+        sequence = prime_sequence if use_prime else x0
         sample = x0
-        sequence_length = 0
+        sequence_length = prime_sequence.size()[0] if use_prime else 0
+        orig_sequence_length = sequence_length
         
         log.info("Generating sample stroke sequence ...")
         self.bias = bias
@@ -440,6 +442,9 @@ class HandwritingSynthesisModel(nn.Module):
             
             #self.helper.progress(count = i, total = sequence_length, status="Generating sequence      ")
         
+        if use_prime:
+            sequence = sequence[orig_sequence_length:]
+
         self.bias = 0
         self.LSTMstates = None
         self.EOS = False

@@ -303,7 +303,7 @@ def smooth_writing(hw_sample, models):
         return
 
     for model in models:
-        model.smooth_handwriting(hw_sample)  
+        model.smooth_handwriting(hw_sample, show_biases = True)  
         
 def get_file_list(folder):
     """get_file_list

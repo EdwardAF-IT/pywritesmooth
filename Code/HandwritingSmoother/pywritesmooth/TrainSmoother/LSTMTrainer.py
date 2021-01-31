@@ -405,6 +405,7 @@ class LSTMTrainer(TrainerInterface):
             seq = [0]
             log.debug(f"One hotting: nothing")
         else:
+            s += ' '
             seq = [alphabet.find(char) + 1 for char in s]
             log.debug(f"One hotting: {s}")
 
@@ -813,12 +814,12 @@ with       25)
 
             for bias in biases:
                 sequences.append(self.trained_model.generate_sequence(x0, c0, bias))
-                print()
+                #print()
             
             self.save_generated_stroke_biases(sequences, factor = 0.5, biases = biases)
         else:
             sequence = self.trained_model.generate_sequence(x0, c0, bias)
-            print()
+            #print()
             seq_msg = f"Sequence shape for text {text} = {sequence.shape}"
             log.debug(seq_msg)
             self.save_generated_stroke(sequence, factor=0.5, show_save_loc = True)

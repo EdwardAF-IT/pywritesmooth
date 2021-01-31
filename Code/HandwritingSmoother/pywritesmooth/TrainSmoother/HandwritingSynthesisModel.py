@@ -84,6 +84,7 @@ class HandwritingSynthesisModel(nn.Module):
         super(HandwritingSynthesisModel, self).__init__()
         
         self.helper = sh.StrokeHelper
+        self.EOS = False
 
         self.Kmixtures = Kmixtures
         self.n_gaussians = n_gaussians
@@ -224,7 +225,6 @@ class HandwritingSynthesisModel(nn.Module):
 
         # Sequence length
         sequence_length = x.shape[0]
-        #log.debug(f"Seq: {sequence_length}")
         
         # Number of batches
         n_batch = x.shape[1]
@@ -305,7 +305,9 @@ class HandwritingSynthesisModel(nn.Module):
             ## (kappa_t - u)[1, 0, :] gives kappa_t[0, :] - 1
             ## etc
             Phi = alpha_t * torch.exp(- beta_t * (kappa_t - u) ** 2) # torch.Size([U_items, n_batch, Kmixtures])
-            Phi = torch.sum(Phi, dim = 2) # torch.Size([U_items, n_batch])  
+            Phi = torch.sum(Phi, dim = 2) # torch.Size([U_items, n_batch]) 
+            if Phi[-1] > torch.max(Phi[:-1]):
+                self.EOS = True     # This is how we know when to stop predicting stroke points
             Phi = torch.unsqueeze(Phi, 0) # torch.Size([1, U_items, n_batch])
             Phi = Phi.permute(2, 0, 1) # torch.Size([n_batch, 1, U_items])
             
@@ -406,12 +408,12 @@ class HandwritingSynthesisModel(nn.Module):
 
         sequence = x0
         sample = x0
-        sequence_length = c0.shape[1] * 25
+        sequence_length = 0
         
         log.info("Generating sample stroke sequence ...")
         self.bias = bias
 
-        for i in range(sequence_length):
+        while not self.EOS and sequence_length < 2000:
             es, pis, mu1s, mu2s, sigma1s, sigma2s, rhos = self.forward(sample, c0, True)
             
             # Selecting a mixture 
@@ -433,10 +435,13 @@ class HandwritingSynthesisModel(nn.Module):
             sample[0, 0, 2] = eos
             
             sequence = torch.cat((sequence, sample), 0) # torch.Size([sequence_length, 1, 3])
+
+            sequence_length += 1
             
-            self.helper.progress(count = i, total = sequence_length, status="Generating sequence      ")
+            #self.helper.progress(count = i, total = sequence_length, status="Generating sequence      ")
         
         self.bias = 0
         self.LSTMstates = None
+        self.EOS = False
         
         return sequence.squeeze(1).detach().cpu().numpy()

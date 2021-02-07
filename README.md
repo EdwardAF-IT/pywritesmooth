@@ -424,7 +424,7 @@ Look closely.  You'll see the same functions noted in the earlier memory cell di
 ### Mixture Densities
 This is a key part of handwriting generation.  In simple terms, the network computes a statistical probability function that represents the odds that the next point in the stroke will be at a certain position.  The distribution is normalized, which makes it easy to differentiate.  Let's use an example.  Say you are drawing an *S*.
 
-![S Grid](images/S-Grid.jpg)
+![S Grid](images/S-Grid.png)
 
 The current point is at the end of the series of connected points along the x/y axis.  Intuitively, you would expect the next likely point to be somewhere in an oval space around the current point.  Because it is an *S*, the distribution would be skewed a bit to the next part of the *S* stroke (because the network was trained, remember, so it generally knows how to draw an *S*).  Here is another visual diagram of what's going on here (minus the *S* strokes), courtesy of [Rafael Monteiro](https://stackoverflow.com/questions/19949435/3d-plot-of-bivariate-distribution-using-r-or-matlab):
 

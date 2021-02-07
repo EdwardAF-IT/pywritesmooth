@@ -136,7 +136,6 @@ dmypy.json
 *.log
 *.log.*
 *.pkl
-*.png
 *.jpg
 *.svg
 *.model

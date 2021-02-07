@@ -26,7 +26,7 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-hs', '--handwriting-save', is_flag=True, help = 'To save or not to save.. the samples (of which there could be a ton)')
 @click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
 @click.option('-w', '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
-@click.option('-tm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
+@click.option('-tsm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
 def main(smooth = False, smooth_model = None, smooth_sample = None, train = None, train_models = None, epoch = None,
          saved_model = None, pickled_data = None, log_file = None, log_level = None, image_save = None, 
          image_display = False, hw_save = None, handwriting_save  = False, generated_save = False, write = None, 
@@ -54,6 +54,11 @@ def main(smooth = False, smooth_model = None, smooth_sample = None, train = None
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
     LOG_MAX_BYTES = 104857600  #100 MB
+
+    def print_help():
+        ctx = click.get_current_context()
+        click.echo(ctx.get_help())
+        ctx.exit()
 
     try:
         # Default log file

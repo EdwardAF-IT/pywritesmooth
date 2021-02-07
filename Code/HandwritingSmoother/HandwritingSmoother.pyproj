@@ -62,6 +62,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="images\" />
     <Folder Include="pywritesmooth\" />
     <Folder Include="pywritesmooth\Data\" />
     <Folder Include="pywritesmooth\TrainSmoother\" />
@@ -69,6 +70,24 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".pypirc" />
+    <Content Include="images\a01-000u-01.png" />
+    <Content Include="images\Bivariate-example.png" />
+    <Content Include="images\epoch_loss.png" />
+    <Content Include="images\Eq1-2.png" />
+    <Content Include="images\Eq18-22.png" />
+    <Content Include="images\Eq23-25.png" />
+    <Content Include="images\Eq3-4.png" />
+    <Content Include="images\Eq46-47.png" />
+    <Content Include="images\Eq48-51.png" />
+    <Content Include="images\Eq7-11.png" />
+    <Content Include="images\heatmap_weights_1.png" />
+    <Content Include="images\LSTM-Arch.png" />
+    <Content Include="images\LSTM-Memory-Cell.png" />
+    <Content Include="images\LSTM-Synth.png" />
+    <Content Include="images\Pipelines.png" />
+    <Content Include="images\RNN-Arch.png" />
+    <Content Include="images\S-Grid.png" />
+    <Content Include="images\Sample.png" />
     <Content Include="LICENSE" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />

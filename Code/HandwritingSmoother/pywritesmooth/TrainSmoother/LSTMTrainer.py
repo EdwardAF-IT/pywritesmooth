@@ -658,7 +658,7 @@ with       25)
 
            As the training proceeds, information of interest is saved, such as the loss
            for epoch and batch.  This information is then plotted at the end of the
-           training.  In addition, heatmaps like those in the paper are plotted every
+           training.  In addition, heat maps like those in the paper are plotted every
            100 batches.
 
            The heart of the whole algorithm happens when we call forward() on the custom
@@ -668,7 +668,7 @@ with       25)
         """
 
         if is_linux:
-            matplotlib.use('Agg')  # Non-interactive backend
+            matplotlib.use('Agg')  # Non-interactive back-end
 
         data_loader = LSTMDataInterface(train_strokeset, self.n_batch, self.sequence_length, 20, U_items=self.U_items) # 20 = datascale
     

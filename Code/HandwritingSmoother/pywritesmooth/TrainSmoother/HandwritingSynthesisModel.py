@@ -143,7 +143,7 @@ class HandwritingSynthesisModel(nn.Module):
 
             Note that the forward function is also used to generate random sequences.
 
-            The first step is to compute LSTM1. This is straightfoward in PyTorch. Since the 
+            The first step is to compute LSTM1. This is straightforward in PyTorch. Since the 
             LSTM cells use Pytorch, we need a for loop over the whole stroke sequence.
 
             After LSTM1, the code computes the attention mechanism given by equations 46-51 
@@ -400,7 +400,7 @@ class HandwritingSynthesisModel(nn.Module):
                * Add it at the end of the sequence (concatenate it)
                * Repeat
 
-           This clearly is bad practise as it has to rerun the forward prop on the entire 
+           This clearly is bad practice as it has to rerun the forward prop on the entire 
            sequence each time. And the sequence gets longer and longer, which takes more 
            time to compute at each new point generated. However, this holds in just a few 
            lines and keeps the forward function cleaner.
@@ -421,7 +421,7 @@ class HandwritingSynthesisModel(nn.Module):
             # Selecting a mixture 
             pi_idx = np.random.choice(range(self.n_gaussians), p=pis[-1, 0, :].detach().cpu().numpy())
             
-            # Taking last parameters from sequence corresponding to chosen gaussian
+            # Taking last parameters from sequence corresponding to chosen Gaussian
             mu1 = mu1s[-1, :, pi_idx].item()
             mu2 = mu2s[-1, :, pi_idx].item()
             sigma1 = sigma1s[-1, :, pi_idx].item()

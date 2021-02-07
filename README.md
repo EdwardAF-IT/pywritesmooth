@@ -653,6 +653,8 @@ Smoothing is very similar to generation.  The key difference is that, instead of
 
 So how do we improve the handwriting?  The answer lies in adding a bias term to the Gaussian mixture equations, as shown in equations 61 and 62 of Graves.  This effectively reduces the variation in point prediction and therefore maintains the style.
 
+![Eq61 62](images/Eq61-62.png)
+
 Lower biases tend to have less effect on the stylistic improvement, whereas higher biases result in cleaner handwriting at a cost of reduced stylistic distinctness.  Practically, values closer to 0 had the least effect and closer to 10 had the greatest effect.
 
 In the code, the method *smooth_handwriting()* is used to smooth the supplied handwriting sequence and to optionally display/save it according to the options that have been set.  The sequence is provided in a data file of the same format online format as the training dataset.  Internally, the sample is simply an instantiation of the *Dataset* class described previously.

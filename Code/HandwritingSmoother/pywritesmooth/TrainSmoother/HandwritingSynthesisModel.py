@@ -407,6 +407,10 @@ class HandwritingSynthesisModel(nn.Module):
         """
 
         empty_x0 = torch.zeros_like(torch.Tensor([0,0,1]).view(1,1,3))
+
+        if use_cuda:
+            empty_x0 = empty_x0.cuda()
+
         sequence = empty_x0 
         sample = x0
         sequence_length = 0

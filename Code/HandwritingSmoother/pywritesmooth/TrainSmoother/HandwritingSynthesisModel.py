@@ -5,7 +5,7 @@ import numpy as np, logging as log
 import torch
 import torch.nn as nn
 use_cuda = False
-#use_cuda = torch.cuda.is_available()
+use_cuda = torch.cuda.is_available()
 
 # Display
 from IPython.display import SVG, display

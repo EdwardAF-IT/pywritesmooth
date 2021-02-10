@@ -10,7 +10,7 @@ from pywritesmooth.Data.LSTMDataInterface import LSTMDataInterface
 import torch
 from torch import nn, optim
 use_cuda = False
-use_cuda = torch.cuda.is_available()
+#use_cuda = torch.cuda.is_available()
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -845,8 +845,8 @@ with       25)
         log.info(msg)
 
         # c is the text to generate
-        text = sample.ascii_data[0]
-        c0 = np.float32(self.one_hot(' '*len(text) + text))
+        text = sample.ascii_data[0] + ' ' + sample.ascii_data[0]
+        c0 = np.float32(self.one_hot(text))
         c0 = torch.from_numpy(c0) 
         c0 = torch.unsqueeze(c0, 0)
 
@@ -859,17 +859,18 @@ with       25)
             prime0 = prime0.cuda()
 
         # Ask the trained model to generate the stroke sequence
+        self.save_generated_stroke(sample.stroke_data[0])
         if show_biases:
             biases = [0., .1, .5, 2, 5, 10]
             sequences = []
 
             for bias in biases:
-                sequences.append(self.trained_model.generate_sequence(x0, c0, bias, prime0))
+                sequences.append(self.trained_model.generate_sequence(prime0, c0, bias))
                 #print()
             
             self.save_generated_stroke_biases(sequences, factor = 0.5, biases = biases)
         else:
-            sequence = self.trained_model.generate_sequence(x0, c0, bias, prime0)
+            sequence = self.trained_model.generate_sequence(prime0, c0, bias)
             print()
             seq_msg = f"Sequence shape for text smoothing = {sequence.shape}"
             log.debug(seq_msg)
@@ -888,4 +889,5 @@ with       25)
             
             sequence = torch.cat((sequence, sample), 0) # torch.Size([sequence_length, 1, 3])
 
+        sequence = sequence[1:]     # Remove first row
         return sequence

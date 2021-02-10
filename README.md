@@ -689,7 +689,4 @@ def smooth_handwriting(self, sample, bias = 10, show_biases = False):
 In the course of exploring techniques for this project, we ran across a lot of information about *GAN*s, or *Generative Adversarial Networks*.  It would be interesting to explore using *GAN*s to replicate the generative and smoothing work presented here.  We believe such a network could be utilized to convert handwriting from an image into the online *x, y* format needed for smoothing.  It would also be interesting to find a way to minimize stylistic variance when using the bias adjustment technique while still improving the legibility.
 
 ## Author
-This project description and source code was written by Edward Fry.
-
-## Copyright
-Copyright (c) 2021 YuMei Bennett, Edward Fry, Muchigi Kimari, Ikenna Nwaogu.  All rights reserved.
+This project description and source code was written by Edward Fry, except where otherwise noted.

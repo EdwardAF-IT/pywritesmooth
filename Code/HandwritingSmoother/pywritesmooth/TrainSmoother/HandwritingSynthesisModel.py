@@ -5,7 +5,7 @@ import numpy as np, logging as log
 import torch
 import torch.nn as nn
 use_cuda = False
-use_cuda = torch.cuda.is_available()
+#use_cuda = torch.cuda.is_available()
 
 # Display
 from IPython.display import SVG, display
@@ -111,7 +111,7 @@ class HandwritingSynthesisModel(nn.Module):
         # Window layer takes hidden layer of LSTM1 as input and outputs 3 * Kmixtures vectors
         self.window_layer = nn.Linear(self.hidden_size1, 3 * Kmixtures)
         
-        # For gaussian mixtures
+        # For Gaussian mixtures
         self.z_e = nn.Linear(hidden_size, 1)
         self.z_pi = nn.Linear(hidden_size, n_gaussians)
         self.z_mu1 = nn.Linear(hidden_size, n_gaussians)
@@ -259,7 +259,7 @@ class HandwritingSynthesisModel(nn.Module):
         
         out = torch.zeros(sequence_length, n_batch, self.hidden_size3)
         
-        # Phis and Ws allow to plot heatmaps of phi et w over time
+        # Phis and Ws allow to plot heat maps of phi et w over time
         self.Phis = torch.zeros(sequence_length, c.shape[1])
         self.Ws = torch.zeros(sequence_length, self.alphabet_size)
         
@@ -311,14 +311,14 @@ class HandwritingSynthesisModel(nn.Module):
             Phi = torch.unsqueeze(Phi, 0) # torch.Size([1, U_items, n_batch])
             Phi = Phi.permute(2, 0, 1) # torch.Size([n_batch, 1, U_items])
             
-            self.Phis[i, :] = Phi[0, 0, :] # To plot heatmaps
+            self.Phis[i, :] = Phi[0, 0, :] # To plot heat maps
             
             # Computing wt 
             # Eq 47 of the paper
             w_t = torch.matmul(Phi, c) # torch.Size([n_batch, 1, len(alphabet)])
             w_t = torch.squeeze(w_t, 1) # torch.Size([n_batch, len(alphabet)])
             
-            self.Ws[i, :] = w_t[0, :] # To plot heatmaps
+            self.Ws[i, :] = w_t[0, :] # To plot heat maps
             
             # Update w_t_1 for next iteration
             w_t_1 = w_t
@@ -388,7 +388,7 @@ class HandwritingSynthesisModel(nn.Module):
         x = np.float32(np.random.multivariate_normal(mean, cov, 1))
         return torch.from_numpy(x)
         
-    def generate_sequence(self, x0, c0, bias, prime_sequence = None):
+    def generate_sequence(self, x0, c0, bias):
         """generate_sequence
 
            The goal of this function is to return a sequence based on either a single point or 
@@ -406,11 +406,10 @@ class HandwritingSynthesisModel(nn.Module):
            lines and keeps the forward function cleaner.
         """
 
-        use_prime = False if prime_sequence is None else True
-        sequence = prime_sequence if use_prime else x0
+        empty_x0 = torch.zeros_like(torch.Tensor([0,0,1]).view(1,1,3))
+        sequence = empty_x0 
         sample = x0
-        sequence_length = prime_sequence.size()[0] if use_prime else 0
-        orig_sequence_length = sequence_length
+        sequence_length = 0
         
         log.info("Generating sample stroke sequence ...")
         self.bias = bias
@@ -431,7 +430,7 @@ class HandwritingSynthesisModel(nn.Module):
             prediction = self.generate_sample(mu1, mu2, sigma1, sigma2, rho)
             eos = torch.distributions.bernoulli.Bernoulli(torch.tensor([es[-1, :].item()])).sample()
             
-            sample = torch.zeros_like(x0) # torch.Size([1, 1, 3])
+            sample = empty_x0 # torch.Size([1, 1, 3])
             sample[0, 0, 0] = prediction[0, 0]
             sample[0, 0, 1] = prediction[0, 1]
             sample[0, 0, 2] = eos
@@ -442,9 +441,6 @@ class HandwritingSynthesisModel(nn.Module):
             
             #self.helper.progress(count = i, total = sequence_length, status="Generating sequence      ")
         
-        if use_prime:
-            sequence = sequence[orig_sequence_length:]
-
         self.bias = 0
         self.LSTMstates = None
         self.EOS = False

@@ -26,7 +26,7 @@ import pywritesmooth.Data.StrokeDataset as sds
 @click.option('-hs', '--handwriting-save', is_flag=True, help = 'To save or not to save.. the samples (of which there could be a ton)')
 @click.option('-gs', '--generated-save', is_flag=True, help = 'To save or not to save.. the generated strokes (of which there could be a ton)')
 @click.option('-w', '--write', type=click.STRING, help="Generate handwriting from a text string: max of 80 chars")
-@click.option('-tsm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generatation tests, which will save as svg files')
+@click.option('-tsm', '--test-model', is_flag=True, help = 'Flag if you want to automatically run the handwriting generation tests, which will save as svg files')
 def main(smooth = False, smooth_model = None, smooth_sample = None, train = None, train_models = None, epoch = None,
          saved_model = None, pickled_data = None, log_file = None, log_level = None, image_save = None, 
          image_display = False, hw_save = None, handwriting_save  = False, generated_save = False, write = None, 
@@ -46,7 +46,7 @@ def main(smooth = False, smooth_model = None, smooth_sample = None, train = None
         if a handwriting sample is supplied in the same IAM format, it will use the trained model to smooth the handwriting while still retaining
         its unique stylistic characteristics.
 
-        At this time, only the LSTM model is implemented; however, the program is written to accomodate any number of smoothing models if they are
+        At this time, only the LSTM model is implemented; however, the program is written to accommodate any number of smoothing models if they are
         written in the future.
     """
     

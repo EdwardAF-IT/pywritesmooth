@@ -65,7 +65,7 @@ class LSTMDataInterface():
     def next_batch(self):
         """next_batch
            
-           Returns a randomised, tsteps sized portion of the training data.  This is a batch that
+           Returns a randomized, tsteps sized portion of the training data.  This is a batch that
            is to be processed as a batch by the trainer.
         """
 
@@ -89,7 +89,7 @@ class LSTMDataInterface():
         """
 
         # Index position 0 means "unknown"
-        if self.alphabet is "default":
+        if self.alphabet == "default":
             alphabet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
         if s is None:

@@ -41,7 +41,7 @@ class LSTMTrainer(TrainerInterface):
 
        Training the model is managed by the train_network() method.  It loops over the 
        specified number of epochs and batches using a custom Pytorch LSTM network (from
-       HandwritingSynthesisModel).  The loss is computed by following the Guassian mixture
+       HandwritingSynthesisModel).  The loss is computed by following the Gaussian mixture
        equations from the paper.
 
        Finally, there are methods to optionally create plots of the sample strokes and
@@ -845,7 +845,7 @@ with       25)
         log.info(msg)
 
         # c is the text to generate
-        text = sample.ascii_data[0] + ' ' + sample.ascii_data[0]
+        text = 2*sample.ascii_data[0]
         c0 = np.float32(self.one_hot(text))
         c0 = torch.from_numpy(c0) 
         c0 = torch.unsqueeze(c0, 0)
@@ -859,7 +859,6 @@ with       25)
             prime0 = prime0.cuda()
 
         # Ask the trained model to generate the stroke sequence
-        self.save_generated_stroke(sample.stroke_data[0])
         if show_biases:
             biases = [0., .1, .5, 2, 5, 10]
             sequences = []

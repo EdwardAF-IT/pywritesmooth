@@ -306,7 +306,7 @@ class HandwritingSynthesisModel(nn.Module):
             ## etc
             Phi = alpha_t * torch.exp(- beta_t * (kappa_t - u) ** 2) # torch.Size([U_items, n_batch, Kmixtures])
             Phi = torch.sum(Phi, dim = 2) # torch.Size([U_items, n_batch]) 
-            if Phi[-1] > torch.max(Phi[:-1]):
+            if Phi[-1][0].item() > torch.max(Phi[:-1]).item():  # Compare the largest value in the last column of Phis to the last Phi in that column
                 self.EOS = True     # This is how we know when to stop predicting stroke points
             Phi = torch.unsqueeze(Phi, 0) # torch.Size([1, U_items, n_batch])
             Phi = Phi.permute(2, 0, 1) # torch.Size([n_batch, 1, U_items])

@@ -1,15 +1,17 @@
 # Basics
-import numpy as np, logging as log
+import platform, copy, numpy as np, logging as log
 
 # Neural Networks
 import torch
 import torch.nn as nn
 use_cuda = False
-use_cuda = torch.cuda.is_available()
+#use_cuda = torch.cuda.is_available()
 
 # Display
 from IPython.display import SVG, display
 import pywritesmooth.Utility.StrokeHelper as sh
+
+is_linux = True if platform.system().lower() == 'linux' else False
 
 class HandwritingSynthesisModel(nn.Module):
     """HandwritingSynthesisModel
@@ -125,6 +127,7 @@ class HandwritingSynthesisModel(nn.Module):
         
         # Saves hidden and cell states
         self.LSTMstates = None
+        self.has_been_primed = False
               
     def forward(self, x, c, generate = False):
         """forward
@@ -306,8 +309,10 @@ class HandwritingSynthesisModel(nn.Module):
             ## etc
             Phi = alpha_t * torch.exp(- beta_t * (kappa_t - u) ** 2) # torch.Size([U_items, n_batch, Kmixtures])
             Phi = torch.sum(Phi, dim = 2) # torch.Size([U_items, n_batch]) 
-            if Phi[-1][0].item() > torch.max(Phi[:-1]).item():  # Compare the largest value in the last column of Phis to the last Phi in that column
+
+            if self.has_been_primed and (Phi[-1][0].item() > torch.max(Phi[:-1]).item()):  # Compare the largest value in the last column of Phis to the last Phi in that column
                 self.EOS = True     # This is how we know when to stop predicting stroke points
+
             Phi = torch.unsqueeze(Phi, 0) # torch.Size([1, U_items, n_batch])
             Phi = Phi.permute(2, 0, 1) # torch.Size([n_batch, 1, U_items])
             
@@ -406,20 +411,18 @@ class HandwritingSynthesisModel(nn.Module):
            lines and keeps the forward function cleaner.
         """
 
-        empty_x0 = torch.zeros_like(torch.Tensor([0,0,1]).view(1,1,3))
-
-        if use_cuda:
-            empty_x0 = empty_x0.cuda()
-
-        sequence = empty_x0 
+        sequence = torch.Tensor([0,0,1]).view(1,1,3)
         sample = x0
         sequence_length = 0
+
+        self.has_been_primed = False
         
         log.info("Generating sample stroke sequence ...")
         self.bias = bias
 
         while not self.EOS and sequence_length < 2000:
             es, pis, mu1s, mu2s, sigma1s, sigma2s, rhos = self.forward(sample, c0, True)
+            self.has_been_primed = True
             
             # Selecting a mixture 
             pi_idx = np.random.choice(range(self.n_gaussians), p=pis[-1, 0, :].detach().cpu().numpy())
@@ -434,7 +437,7 @@ class HandwritingSynthesisModel(nn.Module):
             prediction = self.generate_sample(mu1, mu2, sigma1, sigma2, rho)
             eos = torch.distributions.bernoulli.Bernoulli(torch.tensor([es[-1, :].item()])).sample()
             
-            sample = empty_x0 # torch.Size([1, 1, 3])
+            sample = torch.zeros_like(torch.Tensor([0,0,1]).view(1,1,3)) # torch.Size([1, 1, 3])
             sample[0, 0, 0] = prediction[0, 0]
             sample[0, 0, 1] = prediction[0, 1]
             sample[0, 0, 2] = eos

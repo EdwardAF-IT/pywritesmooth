@@ -10,7 +10,7 @@ from pywritesmooth.Data.LSTMDataInterface import LSTMDataInterface
 import torch
 from torch import nn, optim
 use_cuda = False
-use_cuda = torch.cuda.is_available()
+#use_cuda = torch.cuda.is_available()
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -826,7 +826,7 @@ with       25)
 
     def smooth_handwriting(self, sample, bias = 10, show_biases = False):
         """smooth_handwriting
-
+        "A MOVE to stop Mr. Gaitskell"
            Use the specified sample file to smooth it.  The sample must be in the IAM 
            online data format (XML) at this time.  The result will be saved to an SVG 
            file using the path specified in the *generated-save* flag.

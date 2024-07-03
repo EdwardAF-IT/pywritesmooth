@@ -3,7 +3,7 @@
 Generate or smooth handwritten text using a Python command line application.
 
 ## Summary
-This package began life as the capstone project for a data science Master's program.  With its potential to help people suffering from dysgraphia and other disorders that affect handwriting, the entire project is now open source under an MIT license.  In addition to helping with handwriting by using the application, the project is also well-documented and designed in a way to let students of data science benefit from its study.
+With its potential to help people suffering from dysgraphia and other disorders that affect handwriting, the entire project is open source under an MIT license.  In addition to helping with handwriting by using the application, the project is also well-documented and designed in a way to let students of data science benefit from its study.
 
 The work here is based on a paper by Alex Graves, [Generating Sequences with Recurrent Neural Networks](https://arxiv.org/pdf/1308.0850), which is it highly recommended you read before continuing on.  In particular, much of the application comes from section 5 of that paper.  In addition, some of the modeling code was adapted from the great code of [adeboissiere](https://github.com/adeboissiere/Handwriting-Prediction-and-Synthesis) and is noted as such in the source.
 
